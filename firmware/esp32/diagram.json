@@ -10,9 +10,23 @@
 		},
 		{
 			"type": "wokwi-hc-sr04",
-			"id": "ultrasonic",
+			"id": "sensor1",
 			"attrs": {
 				"distance": "10"
+			}
+		},
+		{
+			"type": "wokwi-hc-sr04",
+			"id": "sensor2",
+			"attrs": {
+				"distance": "100"
+			}
+		},
+		{
+			"type": "wokwi-hc-sr04",
+			"id": "sensor3",
+			"attrs": {
+				"distance": "100"
 			}
 		}
 	],
@@ -28,23 +42,63 @@
 			""
 		],
 		[
-			"ultrasonic:VCC",
+			"sensor1:VCC",
 			"esp:5V",
 			"red"
 		],
 		[
-			"ultrasonic:GND",
+			"sensor1:GND",
 			"esp:GND.1",
 			"black"
 		],
 		[
-			"ultrasonic:TRIG",
+			"sensor1:TRIG",
 			"esp:5",
 			"green"
 		],
 		[
-			"ultrasonic:ECHO",
+			"sensor1:ECHO",
 			"esp:18",
+			"blue"
+		],
+		[
+			"sensor2:VCC",
+			"esp:5V",
+			"red"
+		],
+		[
+			"sensor2:GND",
+			"esp:GND.2",
+			"black"
+		],
+		[
+			"sensor2:TRIG",
+			"esp:19",
+			"green"
+		],
+		[
+			"sensor2:ECHO",
+			"esp:21",
+			"blue"
+		],
+		[
+			"sensor3:VCC",
+			"esp:5V",
+			"red"
+		],
+		[
+			"sensor3:GND",
+			"esp:GND.3",
+			"black"
+		],
+		[
+			"sensor3:TRIG",
+			"esp:22",
+			"green"
+		],
+		[
+			"sensor3:ECHO",
+			"esp:23",
 			"blue"
 		]
 	]
