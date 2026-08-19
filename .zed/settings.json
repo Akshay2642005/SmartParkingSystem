@@ -1,0 +1,31 @@
+// Folder-specific settings
+//
+// For a full list of overridable settings, and general information on folder-specific settings,
+// see the documentation: https://zed.dev/docs/configuring-zed#settings-files
+{
+  "lsp": {
+    "clangd": {
+      "binary": {
+        "path": "/Users/akshay/.espressif/tools/esp-clang/esp-20.1.1_20250829/esp-clang/bin/clangd",
+        "arguments": [
+          "--query-driver=**"
+        ]
+      }
+    }
+  },
+  "terminal": {
+    "env": {
+      "IDF_TOOLS_PATH": "/Users/akshay/.espressif/tools",
+      "IDF_COMPONENT_LOCAL_STORAGE_URL": "file:///Users/akshay/.espressif/tools",
+      "IDF_PATH": "/Users/akshay/.espressif/v6.0.2/esp-idf",
+      "ESP_ROM_ELF_DIR": "/Users/akshay/.espressif/tools/esp-rom-elfs/20241011",
+      "OPENOCD_SCRIPTS": "/Users/akshay/.espressif/tools/openocd-esp32/v0.12.0-esp32-20260424/openocd-esp32/share/openocd/scripts",
+      "IDF_PYTHON_ENV_PATH": "/Users/akshay/.espressif/tools/python/v6.0.2/venv",
+      "ESP_CLANG_LIBS_PATH": "/Users/akshay/.espressif/tools/esp-clang-libs/esp-20.1.1_20250829/esp-clang/lib",
+      "ESP_IDF_VERSION": "6.0",
+      "IDF_VERSION": "6.0.2",
+
+      "PATH": "/Users/akshay/.espressif/tools/esp-clang/esp-20.1.1_20250829/esp-clang/bin:/Users/akshay/.espressif/tools/esp-rom-elfs/20241011:/Users/akshay/.espressif/tools/esp32ulp-elf/2.38_20240113/esp32ulp-elf/bin:/Users/akshay/.espressif/tools/esp32ulp-elf/2.38_20240113/esp32ulp-elf/esp32ulp-elf/bin:/Users/akshay/.espressif/tools/ninja/1.12.1:/Users/akshay/.espressif/tools/openocd-esp32/v0.12.0-esp32-20260424/openocd-esp32/bin:/Users/akshay/.espressif/tools/riscv32-esp-elf-gdb/17.1_20260402/riscv32-esp-elf-gdb/bin:/Users/akshay/.espressif/tools/riscv32-esp-elf/esp-15.2.0_20251204/riscv32-esp-elf/bin:/Users/akshay/.espressif/tools/riscv32-esp-elf/esp-15.2.0_20251204/riscv32-esp-elf/riscv32-esp-elf/bin:/Users/akshay/.espressif/tools/xtensa-esp-elf-gdb/17.1_20260402/xtensa-esp-elf-gdb/bin:/Users/akshay/.espressif/tools/xtensa-esp-elf/esp-15.2.0_20251204/xtensa-esp-elf/bin:/Users/akshay/.espressif/tools/xtensa-esp-elf/esp-15.2.0_20251204/xtensa-esp-elf/xtensa-esp-elf/bin:/Users/akshay/.espressif/tools/python/v6.0.2/venv/bin:$PATH"
+    }
+  }
+}
