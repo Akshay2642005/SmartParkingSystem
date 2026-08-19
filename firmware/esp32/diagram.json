@@ -1,24 +1,51 @@
 {
-  "version": 1,
-  "author": "Uri Shaked",
-  "editor": "wokwi",
-  "parts": [
-    {
-      "type": "board-esp32-devkit-c-v4",
-      "id": "esp",
-      "attrs": {}
-    }
-  ],
-  "connections": [
-    [
-      "esp:TX",
-      "$serialMonitor:RX",
-      ""
-    ],
-    [
-      "esp:RX",
-      "$serialMonitor:TX",
-      ""
-    ]
-  ]
+	"version": 1,
+	"author": "Akshay",
+	"editor": "wokwi",
+	"parts": [
+		{
+			"type": "board-esp32-devkit-c-v4",
+			"id": "esp",
+			"attrs": {}
+		},
+		{
+			"type": "wokwi-hc-sr04",
+			"id": "ultrasonic",
+			"attrs": {
+				"distance": "10"
+			}
+		}
+	],
+	"connections": [
+		[
+			"esp:TX",
+			"$serialMonitor:RX",
+			""
+		],
+		[
+			"esp:RX",
+			"$serialMonitor:TX",
+			""
+		],
+		[
+			"ultrasonic:VCC",
+			"esp:5V",
+			"red"
+		],
+		[
+			"ultrasonic:GND",
+			"esp:GND.1",
+			"black"
+		],
+		[
+			"ultrasonic:TRIG",
+			"esp:5",
+			"green"
+		],
+		[
+			"ultrasonic:ECHO",
+			"esp:18",
+			"blue"
+		]
+	]
 }
