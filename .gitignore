@@ -134,3 +134,4 @@ next-env.d.ts
 
 # Vercel
 .vercel/
+.zed/
