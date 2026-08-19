@@ -1,0 +1,27 @@
+session:
+  current_goal: Establish the specification baseline (M0) for the Smart Parking System.
+  current_phase: M0
+  completed:
+    - ESP-IDF project initialized (smart_parking)
+    - Wokwi simulation initialized
+    - Rust backend scaffold
+    - Next.js dashboard scaffold
+    - Specification set created (docs/specs/)
+  in_progress:
+    - Final validation of specification set
+  next:
+    - Decide sensor selection (ADR-0004)
+    - Decide device communication protocol (ADR-0005)
+    - Begin M1 — ESP32 Foundation
+  blockers:
+    - Sensor selection pending
+    - Communication protocol pending
+    - Backend framework / persistence pending
+    - Real-time update mechanism pending
+  decisions_pending:
+    - ADR-0004 Sensor Selection
+    - ADR-0005 Device Communication
+    - ADR-0006 Backend
+    - ADR-0007 Parking State Model
+    - ADR-0008 Device Identity
+    - ADR-0009 Real-Time Updates

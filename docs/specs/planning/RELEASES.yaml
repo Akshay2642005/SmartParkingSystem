@@ -1,0 +1,4 @@
+releases:
+  - version: v0.1.0
+    status: planning
+    name: Specification Baseline

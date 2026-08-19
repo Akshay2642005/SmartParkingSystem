@@ -1,0 +1,26 @@
+project:
+  name: Smart Parking System
+  status: active
+
+current_phase: M0
+
+completed:
+  - ESP-IDF project initialized
+  - Wokwi simulation initialized
+  - Rust backend scaffold initialized
+  - Next.js dashboard scaffold initialized
+  - Specification set established (docs/specs/)
+
+in_progress:
+  - System specification
+  - Firmware foundation (boot/print scaffold)
+
+planned:
+  - Sensor selection (ADR-0004)
+  - Device communication protocol (ADR-0005)
+  - Parking state machine (ADR-0007)
+  - Device identity (ADR-0008)
+  - Backend framework and persistence (ADR-0006)
+  - Real-time update mechanism (ADR-0009)
+  - Backend
+  - Dashboard

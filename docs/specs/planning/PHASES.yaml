@@ -1,0 +1,40 @@
+phases:
+  - id: M0
+    name: Specification
+    status: active
+    goal: Establish system requirements and architecture.
+
+  - id: M1
+    name: ESP32 Foundation
+    status: planned
+    goal: Establish firmware and simulation foundation.
+
+  - id: M2
+    name: Sensor Layer
+    status: planned
+    goal: Integrate a sensor and derive parking occupancy.
+
+  - id: M3
+    name: Device Platform
+    status: planned
+    goal: Add device connectivity, telemetry, and identity.
+
+  - id: M4
+    name: Backend
+    status: planned
+    goal: Implement backend ingestion, state management, and persistence.
+
+  - id: M5
+    name: Dashboard
+    status: planned
+    goal: Implement the parking availability dashboard.
+
+  - id: M6
+    name: End-to-End Integration
+    status: planned
+    goal: Verify the full device-to-dashboard path.
+
+  - id: M7
+    name: Production Hardening
+    status: planned
+    goal: Prepare for production deployment and security.

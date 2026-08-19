@@ -1,0 +1,60 @@
+terms:
+  - id: parking_slot
+    term: Parking Slot
+    definition: A physical location where a vehicle can be parked.
+
+  - id: occupancy
+    term: Occupancy
+    definition: The current state indicating whether a parking slot is occupied.
+
+  - id: device
+    term: Device
+    definition: An ESP32-based edge device responsible for collecting parking sensor data.
+
+  - id: sensor
+    term: Sensor
+    definition: A hardware component used to measure the physical state of a parking slot.
+
+  - id: telemetry
+    term: Telemetry
+    definition: Device-generated measurements and operational state sent to the platform.
+
+  - id: edge_device
+    term: Edge Device
+    definition: A computing device located close to the physical system being monitored.
+
+  - id: occupancy_state
+    term: Occupancy State
+    definition: The machine-readable representation of a parking slot's occupancy, such as FREE or OCCUPIED.
+
+  - id: parking_lot
+    term: Parking Lot
+    definition: A collection of parking slots within a single managed area.
+
+  - id: site
+    term: Site
+    definition: A physical location that hosts one or more parking lots.
+
+  - id: state_machine
+    term: State Machine
+    definition: A model that defines the allowed states of a parking slot and the transitions between them.
+
+  - id: device_identity
+    term: Device Identity
+    definition: A stable identifier that uniquely distinguishes one device from another.
+
+  - id: heartbeat
+    term: Heartbeat
+    definition: A periodic message from a device indicating that it is alive and connected.
+
+  - id: wokwi
+    term: Wokwi
+    definition: A browser-based hardware simulator used to develop and test the ESP32 firmware without physical hardware.
+
+  - id: esp_idf
+    term: ESP-IDF
+    definition: Espressif's official framework for developing firmware for ESP32 family chips.
+
+  - id: dashboard
+    term: Dashboard
+    definition: A user-facing interface that presents parking availability and slot state.
