@@ -1,15 +1,14 @@
 idf_component_register(
-  SRCS
-    "main.c"
-    "sensors/ultrasonic.c"
-    "parking/parking.c"
-    "parking/parking_config.c"
-  INCLUDE_DIRS
-    ""
-    "sensors"
-    "parking"
-  PRIV_REQUIRES
-    esp_driver_gpio
-    esp_timer
-    log
+		SRCS
+				"main.c"
+				"sensors/ultrasonic.c"
+				"parking/parking.c"
+		INCLUDE_DIRS
+				""
+				"sensors"
+				"parking"
+		PRIV_REQUIRES
+				esp_driver_gpio
+				esp_timer
+				log
 )
