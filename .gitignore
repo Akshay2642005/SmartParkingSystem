@@ -1,0 +1,135 @@
+# OS / IDE
+.DS_Store
+.AppleDouble
+.LSOverride
+.directory
+
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+.vscode/
+*.user
+*.workspace
+*.suo
+*.sln.docstates
+
+# Temporary files
+*~
+*.swp
+*.swo
+*.bak
+*.tmp
+
+
+# Logs / Debug
+*.log
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+
+# General Build Artifacts
+**/build/
+**/dist/
+
+*.o
+*.a
+*.out
+*.exe
+
+
+# Build output
+**/build/
+
+# Firmware / generated binaries
+*.bin
+*.elf
+*.map
+
+# Generated flashing configuration
+flasher_args.json
+
+# ESP-IDF configuration
+sdkconfig.old
+sdkconfig
+
+# ESP-IDF component manager
+managed_components/
+
+# Older/manual component management
+components/.idf/
+**/components/.idf/
+
+# Local ESP-IDF installation/tools
+.espressif/
+
+
+# C / CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+install_manifest.txt
+CTestTestfile.cmake
+
+compile_commands.json
+
+
+# C / C++ Language Servers
+.clangd/
+.ccls-cache/
+.cache/
+
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+
+venv/
+.venv/
+env/
+
+# Rust
+**/target/
+# Node.js / JavaScript / TypeScript
+**/node_modules/
+
+# Yarn
+**/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+
+# Testing
+**/coverage/
+
+
+# Next.js
+**/.next/
+**/out/
+
+
+# Environment / Secrets
+**/.env*
+
+# Uncomment if you intentionally want to commit environment files
+# !**/.env.example
+
+*.pem
+
+
+# Vercel
+.vercel/
