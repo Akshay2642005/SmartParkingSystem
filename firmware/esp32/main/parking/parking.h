@@ -1,12 +1,8 @@
 #pragma once
 
-#include <stdint.h>
-
-#include "esp_err.h"
 #include "ultrasonic.h"
 
 typedef enum {
-  PARKING_UNKNOWN,
   PARKING_FREE,
   PARKING_OCCUPIED,
   PARKING_ERROR,
@@ -16,11 +12,11 @@ typedef struct {
   uint8_t id;
   ultrasonic_config_t sensor;
   float occupied_threshold_cm;
-  float free_threshold_cm;
 } parking_slot_config_t;
 
 typedef struct {
   parking_slot_config_t config;
+  ultrasonic_sensor_t sensor;
   parking_state_t state;
   float distance_cm;
 } parking_slot_t;
@@ -28,7 +24,5 @@ typedef struct {
 void parking_slot_init(parking_slot_t* slot, const parking_slot_config_t* config);
 
 void parking_slot_update(parking_slot_t* slot, float distance_cm);
-
-void parking_slot_mark_error(parking_slot_t* slot);
 
 const char* parking_state_to_string(parking_state_t state);

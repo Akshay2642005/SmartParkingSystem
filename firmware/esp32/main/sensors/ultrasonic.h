@@ -1,12 +1,17 @@
 #pragma once
 
+#include "driver/gpio.h"
 #include "esp_err.h"
 
 typedef struct {
-  int trig_gpio;
-  int echo_gpio;
+  gpio_num_t trig_gpio;
+  gpio_num_t echo_gpio;
 } ultrasonic_config_t;
 
-esp_err_t ultrasonic_init(const ultrasonic_config_t* config);
+typedef struct {
+  ultrasonic_config_t config;
+} ultrasonic_sensor_t;
 
-esp_err_t ultrasonic_measure_cm(const ultrasonic_config_t* config, float* distance_cm);
+esp_err_t ultrasonic_init(ultrasonic_sensor_t* sensor, const ultrasonic_config_t* config);
+
+esp_err_t ultrasonic_measure_cm(const ultrasonic_sensor_t* sensor, float* distance_cm);

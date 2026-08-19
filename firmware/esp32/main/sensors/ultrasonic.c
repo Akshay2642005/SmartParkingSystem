@@ -1,20 +1,22 @@
 #include "ultrasonic.h"
 
-#include "driver/gpio.h"
-#include "esp_rom_sys.h"
+#include "esp_log.h"
 #include "esp_timer.h"
 
-#define ECHO_TIMEOUT_US 30000
-#define MIN_VALID_DURATION_US 120
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 
-esp_err_t ultrasonic_init(const ultrasonic_config_t* config) {
-  if (config == NULL) {
+static const char* TAG = "ultrasonic";
+
+#define ULTRASONIC_TIMEOUT_US 30000
+#define SOUND_SPEED_CM_PER_US 0.0343f
+
+esp_err_t ultrasonic_init(ultrasonic_sensor_t* sensor, const ultrasonic_config_t* config) {
+  if (sensor == NULL || config == NULL) {
     return ESP_ERR_INVALID_ARG;
   }
 
-  if (config->trig_gpio < 0 || config->echo_gpio < 0 || config->trig_gpio == config->echo_gpio) {
-    return ESP_ERR_INVALID_ARG;
-  }
+  sensor->config = *config;
 
   gpio_config_t trig_config = {
     .pin_bit_mask = 1ULL << config->trig_gpio,
@@ -36,48 +38,49 @@ esp_err_t ultrasonic_init(const ultrasonic_config_t* config) {
 
   ESP_ERROR_CHECK(gpio_config(&echo_config));
 
-  gpio_set_level(config->trig_gpio, 0);
+  ESP_ERROR_CHECK(gpio_set_level(config->trig_gpio, 0));
+
+  ESP_LOGI(TAG, "Initialized TRIG=%d ECHO=%d", config->trig_gpio, config->echo_gpio);
 
   return ESP_OK;
 }
 
-esp_err_t ultrasonic_measure_cm(const ultrasonic_config_t* config, float* distance_cm) {
-  if (config == NULL || distance_cm == NULL) {
+esp_err_t ultrasonic_measure_cm(const ultrasonic_sensor_t* sensor, float* distance_cm) {
+  if (sensor == NULL || distance_cm == NULL) {
     return ESP_ERR_INVALID_ARG;
   }
 
-  gpio_set_level(config->trig_gpio, 0);
+  const gpio_num_t trig = sensor->config.trig_gpio;
+  const gpio_num_t echo = sensor->config.echo_gpio;
+
+  gpio_set_level(trig, 0);
   esp_rom_delay_us(2);
 
-  gpio_set_level(config->trig_gpio, 1);
+  gpio_set_level(trig, 1);
   esp_rom_delay_us(10);
-  gpio_set_level(config->trig_gpio, 0);
+  gpio_set_level(trig, 0);
 
-  int64_t start = esp_timer_get_time();
+  int64_t timeout_start = esp_timer_get_time();
 
-  while (gpio_get_level(config->echo_gpio) == 0) {
-    if (esp_timer_get_time() - start > ECHO_TIMEOUT_US) {
+  while (gpio_get_level(echo) == 0) {
+    if (esp_timer_get_time() - timeout_start >= ULTRASONIC_TIMEOUT_US) {
       return ESP_ERR_TIMEOUT;
     }
   }
 
-  int64_t echo_start = esp_timer_get_time();
+  int64_t pulse_start = esp_timer_get_time();
 
-  while (gpio_get_level(config->echo_gpio) == 1) {
-    if (esp_timer_get_time() - echo_start > ECHO_TIMEOUT_US) {
+  while (gpio_get_level(echo) == 1) {
+    if (esp_timer_get_time() - pulse_start >= ULTRASONIC_TIMEOUT_US) {
       return ESP_ERR_TIMEOUT;
     }
   }
 
-  int64_t echo_end = esp_timer_get_time();
+  int64_t pulse_end = esp_timer_get_time();
 
-  int64_t duration_us = echo_end - echo_start;
+  int64_t pulse_duration_us = pulse_end - pulse_start;
 
-  if (duration_us < MIN_VALID_DURATION_US) {
-    return ESP_ERR_INVALID_RESPONSE;
-  }
-
-  *distance_cm = duration_us / 58.0f;
+  *distance_cm = (pulse_duration_us * SOUND_SPEED_CM_PER_US) / 2.0f;
 
   return ESP_OK;
 }
