@@ -1,5 +1,6 @@
 #pragma once
 
+#include "esp_err.h"
 #include "ultrasonic.h"
 
 typedef enum {
@@ -21,7 +22,7 @@ typedef struct {
   float distance_cm;
 } parking_slot_t;
 
-void parking_slot_init(parking_slot_t* slot, const parking_slot_config_t* config);
+esp_err_t parking_slot_init(parking_slot_t* slot, const parking_slot_config_t* config);
 
 void parking_slot_update(parking_slot_t* slot, float distance_cm);
 

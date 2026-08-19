@@ -1,5 +1,6 @@
 #include <stdio.h>
 
+#include "esp_err.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
@@ -15,7 +16,7 @@ static parking_slot_t slots[PARKING_SLOT_COUNT];
 
 static void initialize_slots(void) {
   for (int i = 0; i < PARKING_SLOT_COUNT; i++) {
-    parking_slot_init(&slots[i], &slot_configs[i]);
+    ESP_ERROR_CHECK(parking_slot_init(&slots[i], &slot_configs[i]));
   }
 }
 
