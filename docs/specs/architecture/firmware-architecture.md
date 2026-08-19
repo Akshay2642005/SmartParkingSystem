@@ -1,33 +1,30 @@
 # Firmware Architecture
 
-Status: **Current** (describes the intended architecture; current code is a
-boot/print scaffold)
+Status: **Current** (M2 — Sensor Layer partially implemented)
 
-This document describes the ESP-IDF firmware architecture. The current firmware
-(`firmware/esp32/main/hello_world_main.c`) only initializes the system and prints
-chip info. The layered architecture below is the **target** for the firmware and
-is `Planned` until implemented.
+This document describes the ESP-IDF firmware architecture. The sensor and
+parking-state modules are implemented; connectivity and telemetry are not yet.
 
 ## Target Layer Structure
 
 ```text
-Application
+Application (main.c)
     │
     ▼
-Domain / Parking State
+Domain / Parking State (parking/parking.c)
     │
     ▼
 Services
-    ├── Sensor Manager
-    ├── Connectivity
-    ├── Telemetry
-    └── Configuration
+    ├── Sensor Manager      (main.c update_slots)
+    ├── Connectivity        (not yet implemented)
+    ├── Telemetry           (not yet implemented)
+    └── Configuration       (parking/parking_config.c)
     │
     ▼
 Drivers
-    ├── Sensor
-    ├── GPIO
-    └── Other hardware
+    ├── Sensor              (sensors/ultrasonic.c)
+    ├── GPIO                (via esp_driver_gpio)
+    └── Other hardware      (none yet)
     │
     ▼
 ESP-IDF / FreeRTOS
@@ -35,62 +32,66 @@ ESP-IDF / FreeRTOS
 
 ## Current State
 
-- `app_main` in `main/hello_world_main.c` runs once at boot.
-- Uses FreeRTOS task APIs and ESP-IDF native APIs.
-- A single task loops and prints status every second.
-- No sensors, state machine, connectivity, or telemetry yet.
-
-## Planned Components
-
 ### app_main
 
-- Entry point; initializes the system, configuration, services, and starts
-  firmware tasks.
+- `main/main.c` initializes slots and runs a single loop.
+- Each loop iteration samples every sensor and updates slot state.
 
 ### Tasks & Scheduling
 
-- FreeRTOS tasks for sensor sampling, connectivity, and telemetry.
-- Scheduling priorities/periods: Pending Decision.
+- A single task runs `app_main`'s loop with a 1 s delay between cycles.
+- Per-slot sampling is sequential.
+- Dedicated FreeRTOS tasks for connectivity/telemetry: not yet implemented.
+
+### Parking State Machine
+
+- Implemented in `parking/parking.c` (UNKNOWN/FREE/OCCUPIED/ERROR).
+- See `../decisions/ADR-0007-parking-state-model.md`.
+
+### Slot Configuration
+
+- Slot count, GPIO, and thresholds live in `parking/parking_config.c`
+  (declared in `parking/parking_config.h`).
 
 ### Sensor Sampling
 
-- Periodically sample the connected sensor (`FR-010`).
-- Driver interface converts raw readings into a normalized input.
-
-### State Transitions
-
-- Convert sensor-derived readings into parking states (`FR-011`) per the state
-  machine in `../decisions/ADR-0007-parking-state-model.md`.
+- `main.c:update_slots` samples each sensor via `ultrasonic_measure_cm` and
+  passes the distance to `parking_slot_update` (`FR-010`, `FR-011`).
 
 ### Error Handling
 
-- Handle invalid sensor readings without crashing (`FR-012`).
-- Timeouts and ambiguous readings handled per `ADR-0007`.
+- Invalid/out-of-range readings set `ERROR` via `parking_slot_update`.
+- Measurement failures call `parking_slot_mark_error` (`FR-012`).
+- Invalid GPIO configuration is rejected by `ultrasonic_init`.
 
 ### Logging
 
-- Use ESP-IDF logging for observability (`NFR-005`).
-- Config: Pending Decision.
+- `ESP_LOGI` per slot update and `ESP_LOGE` on sensor errors (TAG `parking`).
+- Provided by the `log` component (declared in `main/CMakeLists.txt`).
 
 ### Configuration
 
-- Device identity, network credentials, and sensor parameters.
-- Scheme: Pending Decision (`../decisions/ADR-0008-device-identity.md`).
+- Per-slot: `id`, `trig_gpio`, `echo_gpio`, `occupied_threshold_cm`,
+  `free_threshold_cm`.
 
 ### Networking
 
-- Wi-Fi initialization and connection.
-- Protocol: Pending Decision (`../decisions/ADR-0005-device-communication.md`).
+- Not yet implemented. Wi-Fi and device-to-backend communication are pending
+  (`../decisions/ADR-0005-device-communication.md`).
 
 ### Telemetry
 
-- Send device state to the backend.
 - Not yet implemented.
 
 ### Watchdog / Recovery
 
-- Recovery from connectivity loss and task hangs (`FR-021`).
-- If applicable; design pending.
+- Not yet implemented. Recovery from connectivity loss is planned (`FR-021`).
+
+## Build
+
+- CMake-based ESP-IDF build; component `main` requires `esp_driver_gpio`,
+  `esp_timer`, and `log`.
+- Project builds with `-Wall -Werror`.
 
 ## Related Documents
 

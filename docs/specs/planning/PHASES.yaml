@@ -6,12 +6,12 @@ phases:
 
   - id: M1
     name: ESP32 Foundation
-    status: planned
+    status: completed
     goal: Establish firmware and simulation foundation.
 
   - id: M2
     name: Sensor Layer
-    status: planned
+    status: active
     goal: Integrate a sensor and derive parking occupancy.
 
   - id: M3

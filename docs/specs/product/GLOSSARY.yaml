@@ -15,6 +15,22 @@ terms:
     term: Sensor
     definition: A hardware component used to measure the physical state of a parking slot.
 
+  - id: ultrasonic_sensor
+    term: Ultrasonic Sensor
+    definition: A sensor that measures distance using sound pulses; the HC-SR04 is used to detect vehicle presence in a parking slot.
+
+  - id: hc_sr04
+    term: HC-SR04
+    definition: The ultrasonic distance sensor used per parking slot, wired via TRIG and ECHO GPIO pins.
+
+  - id: hysteresis
+    term: Hysteresis
+    definition: The gap between the occupied threshold and the free threshold that prevents a slot state from flapping on noisy readings.
+
+  - id: threshold
+    term: Threshold
+    definition: A configured distance in centimeters used to decide whether a slot is occupied or free.
+
   - id: telemetry
     term: Telemetry
     definition: Device-generated measurements and operational state sent to the platform.

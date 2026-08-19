@@ -12,18 +12,18 @@ initial scaffolding; most capability is `Planned`.
 
 | Area | Status | Notes |
 | ---- | ------ | ----- |
-| Parking slot detection | Planned | Determine occupancy from sensor data |
-| ESP32 firmware | Current (scaffold) | ESP-IDF "smart_parking" project boots and prints system info |
-| Sensor integration | Planned | No sensor selected yet (`ADR-0004` Proposed) |
-| Device state management | Planned | Parking state machine (`ADR-0007` Proposed) |
+| Parking slot detection | Current | HC-SR04 ultrasonic per slot (`ADR-0004`) |
+| ESP32 firmware | Current | ESP-IDF `smart_parking`; samples sensors, runs state machine |
+| Sensor integration | Current | Driver + Wokwi simulation (3 sensors) |
+| Device state management | Current | Parking state machine (`ADR-0007`) |
 | Device connectivity | Planned | Protocol pending (`ADR-0005` Proposed) |
 | Telemetry | Planned | Not yet implemented |
 | Backend ingestion | Planned | Rust workspace scaffolded; no API yet |
-| Parking state management | Planned | Not yet implemented |
+| Parking state management (backend) | Planned | Not yet implemented |
 | Persistence | Planned | Not yet implemented |
 | Parking availability | Planned | Not yet implemented |
 | Dashboard | Planned | Next.js scaffolded; default starter only |
-| Wokwi simulation | Current | `diagram.json` + `wokwi.toml` exist; ESP32 + serial monitor only |
+| Wokwi simulation | Current | `diagram.json` + `wokwi.toml`; ESP32 + 3× HC-SR04 |
 | System specification | Current | This specification set |
 
 ## Out of Scope

@@ -23,8 +23,8 @@ Use **Wokwi** as the hardware simulation environment for firmware development.
 ## Decision Details
 
 - **Environment**: Wokwi (browser-based ESP32 simulator).
-- **Current scope**: An ESP32 DevKit C V4 with a serial monitor. No sensors are
-  connected yet.
+- **Current scope**: An ESP32 DevKit C V4 with a serial monitor and **three
+  `wokwi-hc-sr04` ultrasonic sensors** wired to GPIO pairs 5/18, 19/21, 22/23.
 - **Firmware artifact**: `build/smart_parking.elf`.
 
 ## Why Simulation Is Useful

@@ -34,5 +34,8 @@ specifications.
 
 ## Status
 
-All functional capability is currently **Planned**; the project is in phase
-**M0 (Specification)**. See [docs/specs/planning/STATUS.yaml](docs/specs/planning/STATUS.yaml).
+- FR-001…FR-003 (Parking) and FR-010…FR-012 (Firmware) are **Current** at the
+  device layer (ultrasonic driver + parking state machine).
+- FR-020…FR-041 (Connectivity, Backend, Dashboard) remain **Planned**.
+- The project is in phase **M2 (Sensor Layer)**. See
+  [docs/specs/planning/STATUS.yaml](docs/specs/planning/STATUS.yaml).

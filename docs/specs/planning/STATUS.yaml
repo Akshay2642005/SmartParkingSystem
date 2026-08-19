@@ -2,7 +2,7 @@ project:
   name: Smart Parking System
   status: active
 
-current_phase: M0
+current_phase: M2
 
 completed:
   - ESP-IDF project initialized
@@ -10,17 +10,20 @@ completed:
   - Rust backend scaffold initialized
   - Next.js dashboard scaffold initialized
   - Specification set established (docs/specs/)
+  - M1 — ESP32 Foundation (firmware boots, clean build, Wokwi)
+  - Ultrasonic (HC-SR04) sensor driver
+  - Parking state machine (UNKNOWN/FREE/OCCUPIED/ERROR)
+  - Parking slot configuration (3 slots, per-slot GPIO + thresholds)
 
 in_progress:
-  - System specification
-  - Firmware foundation (boot/print scaffold)
+  - M2 — Sensor Layer verification
+  - Wokwi sensor integration verification
 
 planned:
-  - Sensor selection (ADR-0004)
   - Device communication protocol (ADR-0005)
-  - Parking state machine (ADR-0007)
   - Device identity (ADR-0008)
   - Backend framework and persistence (ADR-0006)
   - Real-time update mechanism (ADR-0009)
-  - Backend
-  - Dashboard
+  - M3 — Device Platform
+  - M4 — Backend
+  - M5 — Dashboard

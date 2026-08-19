@@ -8,16 +8,19 @@ System.
 ## Firmware
 
 - **Unit tests**: driver and service logic.
-- **State-machine tests**: occupancy transitions per `../decisions/ADR-0007-parking-state-model.md`.
-- **Driver tests**: sensor driver behavior.
+- **State-machine tests**: occupancy transitions per `../decisions/ADR-0007-parking-state-model.md`
+  (UNKNOWN → FREE/OCCUPIED, hysteresis, ERROR recovery).
+- **Driver tests**: HC-SR04 driver behavior (init, invalid args, timeout,
+  invalid response).
 - **Sensor validation**: handling of valid/invalid/ambiguous readings (`FR-012`).
 - **Error handling**: timeout, sensor disconnect, task failure.
 
 ## Simulation
 
 - **Wokwi boot**: firmware boots in Wokwi (see `../decisions/ADR-0003-wokwi.md`).
-- **Sensor behavior**: sensor state changes reflected in firmware.
-- **State transitions**: FREE ⇄ OCCUPIED transitions observed.
+- **Sensor behavior**: `wokwi-hc-sr04` distance changes reflected in firmware.
+- **State transitions**: FREE ⇄ OCCUPIED transitions observed (sensor1 at 10 cm
+  occupied; sensors 2/3 at 100 cm free).
 - **Connectivity**: device connection behavior (once protocol decided).
 
 ## Backend

@@ -4,9 +4,8 @@ A real-time IoT parking management system that detects parking-slot occupancy
 using ESP32-connected sensors, reports parking state to a backend platform,
 persists parking information, and exposes current parking availability to users.
 
-> Status: **active** — current phase **M0 (Specification)**.
-> The project is in its scaffolding phase. See [docs/specs/](docs/specs/) for the
-> full specification.
+> Status: **active** — current phase **M2 (Sensor Layer)**.
+> See [docs/specs/](docs/specs/) for the full specification.
 
 ## Repository Layout
 
@@ -21,12 +20,12 @@ docs/specs/          Specification system (source of truth)
 
 | Area | Status |
 | ---- | ------ |
-| Firmware | ESP-IDF scaffold; boots and prints system info |
-| Simulation | Wokwi (ESP32 + serial monitor) |
-| Sensor | Pending Decision |
+| Firmware | Samples 3× HC-SR04 sensors; parking state machine implemented |
+| Simulation | Wokwi (ESP32 + 3× ultrasonic sensors) |
+| Sensor | HC-SR04 (Accepted, ADR-0004) |
 | Backend | Rust scaffold; no API yet |
 | Dashboard | Next.js starter template |
-| Specification | M0 baseline |
+| Specification | Phase M2 (Sensor Layer) active |
 
 ## Specifications
 

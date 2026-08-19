@@ -16,22 +16,23 @@ Status of each requirement: `Planned` unless noted otherwise.
 ### Parking
 
 - **FR-001** — The system shall identify individual parking slots.
-  Status: Planned
+  Status: Current (per-slot `id` in `parking_config.c`)
 - **FR-002** — The system shall determine the occupancy state of each parking
   slot.
-  Status: Planned
+  Status: Current (ultrasonic driver + parking state machine)
 - **FR-003** — The system shall maintain the latest known state of each slot.
-  Status: Planned
+  Status: Partial — firmware maintains in-memory state; backend persistence is
+  Planned
 
 ### Firmware
 
 - **FR-010** — The ESP32 shall periodically sample connected sensors.
-  Status: Planned
+  Status: Current (1 s sampling loop)
 - **FR-011** — The firmware shall convert sensor readings into parking states.
-  Status: Planned
+  Status: Current (`parking_slot_update`)
 - **FR-012** — The firmware shall handle invalid sensor readings without
   crashing.
-  Status: Planned
+  Status: Current (range validation + ERROR state)
 
 ### Connectivity
 

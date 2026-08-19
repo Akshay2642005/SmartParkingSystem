@@ -42,7 +42,7 @@ Infrastructure   → hosting/network                          (Pending Decision)
 
 | Container | Status | Notes |
 | --------- | ------ | ----- |
-| ESP32 firmware | Scaffold | Boots, prints system info; no sensors/network yet |
+| ESP32 firmware | Partial | Boots, samples 3 ultrasonic sensors, runs parking state machine; no connectivity yet |
 | Backend/API | Scaffold | Rust starter binary; no API |
 | Database | Pending Decision | No persistence technology chosen |
 | Frontend | Scaffold | Next.js default starter |
@@ -51,19 +51,19 @@ Infrastructure   → hosting/network                          (Pending Decision)
 ## Data Flow
 
 ```text
-Sensor
+Sensor           (Current — HC-SR04, Wokwi + driver)
   ↓
-ESP32
+ESP32            (Current — parking state machine)
   ↓
-Device state
+Device state     (Current — in-memory on device)
   ↓
-Network            (protocol pending — ADR-0005)
+Network          (Planned — protocol pending, ADR-0005)
   ↓
-Backend
+Backend          (Planned — Rust scaffold only)
   ↓
-Database
+Database         (Pending Decision)
   ↓
-Dashboard
+Dashboard        (Planned — Next.js scaffold only)
 ```
 
 ## Failure Paths

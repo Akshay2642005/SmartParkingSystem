@@ -3,11 +3,13 @@ idf_component_register(
     "main.c"
     "sensors/ultrasonic.c"
     "parking/parking.c"
+    "parking/parking_config.c"
   INCLUDE_DIRS
     ""
     "sensors"
     "parking"
   PRIV_REQUIRES
-  	esp_driver_gpio
-  	esp_timer
+    esp_driver_gpio
+    esp_timer
+    log
 )

@@ -13,13 +13,13 @@ where the repository has not established them.
 | Technology | Purpose | Status | Version | Source of truth |
 | ---------- | ------- | ------ | ------- | --------------- |
 | ESP32 DevKit C V4 | Development board | Current | — | `firmware/esp32/diagram.json` |
-| Sensor | Parking occupancy detection | Pending Decision | — | `ADR-0004` |
+| HC-SR04 (ultrasonic) | Parking occupancy detection | Current | — | `firmware/esp32/main/sensors/ultrasonic.c`, `ADR-0004` |
 
 ## Firmware
 
 | Technology | Purpose | Status | Version | Source of truth |
 | ---------- | ------- | ------ | ------- | --------------- |
-| ESP-IDF | Firmware framework | Current | — | `firmware/esp32/CMakeLists.txt`, `ADR-0002` |
+| ESP-IDF | Firmware framework | Current | 6.0.2 | `firmware/esp32/CMakeLists.txt`, `ADR-0002` |
 | FreeRTOS | RTOS (provided by ESP-IDF) | Current | — | `main/hello_world_main.c` |
 | C | Firmware language | Current | — | `main/hello_world_main.c` |
 
@@ -28,6 +28,7 @@ where the repository has not established them.
 | Technology | Purpose | Status | Version | Source of truth |
 | ---------- | ------- | ------ | ------- | --------------- |
 | Wokwi | Hardware simulation | Current | — | `firmware/esp32/wokwi.toml`, `diagram.json`, `ADR-0003` |
+| pytest-embedded | Firmware tests | Current | — | `firmware/esp32/pytest_smart_parking.py` |
 
 ## Build System
 

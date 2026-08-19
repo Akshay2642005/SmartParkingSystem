@@ -1,53 +1,60 @@
 # Hardware Architecture
 
-Status: **Current** (simulation only; no physical sensor yet)
+Status: **Current** (Wokwi simulation; physical hardware not yet deployed)
 
-This document describes the hardware architecture of the device layer. In the
-current repository, hardware exists only in Wokwi simulation: an ESP32 DevKit C
-V4 with a serial monitor. No sensor is connected.
+This document describes the hardware architecture of the device layer. The
+current hardware exists in Wokwi simulation: an ESP32 DevKit C V4 with three
+HC-SR04 ultrasonic sensors.
 
 ## Conceptual Diagram
 
 ```text
-Parking Slot 1
-      │
-    Sensor
-      │
-      ▼
-    ESP32
-      │
-      ├── Sensor 2      (future)
-      ├── Sensor 3      (future)
-      └── Sensor N      (future)
+Parking Slot 1   Parking Slot 2   Parking Slot 3
+      │                │                │
+    Sensor1          Sensor2          Sensor3
+      │                │                │
+      └──────┬─────────┴─────────┬──────┘
+             ▼
+           ESP32
 ```
 
 ## Current Hardware (Simulation)
 
 - **Board**: ESP32 DevKit C V4 (`board-esp32-devkit-c-v4` in `diagram.json`).
-- **Connections**: `TX`/`RX` to a serial monitor only.
-- No sensors, LEDs, or displays connected.
-
-## Planned Hardware
-
-| Component | Status | Notes |
-| --------- | ------ | ----- |
-| ESP32 board | Current | DevKit C V4 |
-| Sensor | Pending Decision | See `ADR-0004` |
-| GPIO | Pending Decision | Assignments only after confirmed by code/config |
-| Power | Pending Decision | Not addressed yet |
-| LEDs | Pending Decision | Optional status indication |
-| Displays | Pending Decision | Not required for MVP |
-
-## Physical Topology
-
-The target maps sensors to parking slots via the device identity model
-(`../decisions/ADR-0008-device-identity.md`). A device may host one or more
-sensors, each associated with a slot.
+- **Sensors**: three `wokwi-hc-sr04` ultrasonic sensors.
+- **Connections**: `TX`/`RX` to a serial monitor; each sensor wired to VCC
+  (5 V), GND, TRIG, and ECHO.
 
 ## GPIO Assignments
 
-Actual GPIO assignments are **not** documented because they have not been
-determined by code or configuration. They will be recorded here once confirmed.
+Confirmed by `firmware/esp32/diagram.json` and
+`firmware/esp32/main/parking/parking_config.c`:
+
+| Slot | TRIG GPIO | ECHO GPIO | Occupied ≤ | Free > |
+| ---- | --------- | --------- | ---------- | ------ |
+| 1 | 5 | 18 | 30 cm | 40 cm |
+| 2 | 19 | 21 | 30 cm | 40 cm |
+| 3 | 22 | 23 | 30 cm | 40 cm |
+
+## Physical Topology
+
+Each parking slot has one HC-SR04 sensor connected to the ESP32. Slot identity
+(`id`) maps a sensor to a slot; the device identity model
+(`../decisions/ADR-0008-device-identity.md`) is pending.
+
+## Power
+
+- Sensors are powered from the 5 V rail in Wokwi.
+- Physical power design: Pending Decision.
+
+## Planned Hardware (Not Yet Present)
+
+| Component | Status | Notes |
+| --------- | ------ | ----- |
+| Connectivity (Wi-Fi) | Pending Decision | See ADR-0005 |
+| LEDs / status indicators | Pending Decision | Optional |
+| Displays | Pending Decision | Not required for MVP |
+| Production provisioning | Pending Decision | See `../security/DEVICE_SECURITY.md` |
 
 ## Related Documents
 

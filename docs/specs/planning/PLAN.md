@@ -35,7 +35,7 @@ M7 — Production Hardening
   verification.
 - **Acceptance criteria**: Firmware builds and boots in Wokwi; verification
   recorded.
-- **Risks**: Devcontainer/toolchain issues.
+- **Status**: Completed (builds clean with `-Wall -Werror`).
 
 ## M2 — Sensor Layer
 
@@ -45,6 +45,8 @@ M7 — Production Hardening
   (`ADR-0007`).
 - **Acceptance criteria**: Firmware detects occupancy states in Wokwi;
   invalid-readings handling verified.
+- **Status**: In progress — driver, sampling, and state machine implemented;
+  Wokwi verification pending.
 - **Risks**: Sensor selection and simulation fidelity.
 
 ## M3 — Device Platform

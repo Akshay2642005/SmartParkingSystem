@@ -1,27 +1,26 @@
 session:
-  current_goal: Establish the specification baseline (M0) for the Smart Parking System.
-  current_phase: M0
+  current_goal: Complete M2 — Sensor Layer verification and firmware hardening.
+  current_phase: M2
   completed:
-    - ESP-IDF project initialized (smart_parking)
-    - Wokwi simulation initialized
-    - Rust backend scaffold
-    - Next.js dashboard scaffold
-    - Specification set created (docs/specs/)
+    - M0 — Specification baseline
+    - M1 — ESP32 Foundation (firmware boots, clean build, Wokwi)
+    - Ultrasonic (HC-SR04) sensor driver
+    - Parking state machine (UNKNOWN/FREE/OCCUPIED/ERROR)
+    - Slot configuration (3 slots, per-slot GPIO + thresholds)
   in_progress:
-    - Final validation of specification set
+    - M2 — Sensor Layer verification
+    - Firmware code-quality review and fixes
   next:
-    - Decide sensor selection (ADR-0004)
+    - Verify sensor integration in Wokwi
     - Decide device communication protocol (ADR-0005)
-    - Begin M1 — ESP32 Foundation
+    - Begin M3 — Device Platform
   blockers:
-    - Sensor selection pending
     - Communication protocol pending
     - Backend framework / persistence pending
     - Real-time update mechanism pending
+    - Device identity scheme pending
   decisions_pending:
-    - ADR-0004 Sensor Selection
     - ADR-0005 Device Communication
     - ADR-0006 Backend
-    - ADR-0007 Parking State Model
     - ADR-0008 Device Identity
     - ADR-0009 Real-Time Updates

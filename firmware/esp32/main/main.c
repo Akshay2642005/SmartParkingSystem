@@ -9,12 +9,7 @@
 #include "parking_config.h"
 #include "ultrasonic.h"
 
-#define SLOT_COUNT 3
 static const char* TAG = "parking";
-
-static parking_slot_t slots[SLOT_COUNT];
-
-#include "parking.h"
 
 static parking_slot_t slots[PARKING_SLOT_COUNT];
 
@@ -27,7 +22,7 @@ static void initialize_slots(void) {
 }
 
 static void update_slots(void) {
-  for (int i = 0; i < SLOT_COUNT; i++) {
+  for (int i = 0; i < PARKING_SLOT_COUNT; i++) {
     float distance_cm;
 
     esp_err_t result = ultrasonic_measure_cm(&slots[i].config.sensor, &distance_cm);
@@ -41,7 +36,7 @@ static void update_slots(void) {
         slots[i].distance_cm,
         parking_state_to_string(slots[i].state));
     } else {
-      slots[i].state = PARKING_ERROR;
+      parking_slot_mark_error(&slots[i]);
 
       ESP_LOGE(TAG, "Slot %d | Sensor error: %s", slots[i].config.id, esp_err_to_name(result));
     }
@@ -56,7 +51,7 @@ void app_main(void) {
 
   initialize_slots();
 
-  ESP_LOGI(TAG, "Initialized %d parking slots", SLOT_COUNT);
+  ESP_LOGI(TAG, "Initialized %d parking slots", PARKING_SLOT_COUNT);
 
   while (1) {
     update_slots();
