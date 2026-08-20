@@ -1,10 +1,10 @@
 #include <stdio.h>
 
 #include "esp_err.h"
+#include "esp_log.h"
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-
-#include "esp_log.h"
 
 #include "parking.h"
 #include "parking_config.h"
@@ -13,11 +13,14 @@
 static const char* TAG = "parking";
 
 static parking_slot_t slots[PARKING_SLOT_COUNT];
+static parking_lot_t parking_lot;
 
 static void initialize_slots(void) {
   for (int i = 0; i < PARKING_SLOT_COUNT; i++) {
     ESP_ERROR_CHECK(parking_slot_init(&slots[i], &slot_configs[i]));
   }
+
+  parking_lot_init(&parking_lot, slots, PARKING_SLOT_COUNT);
 }
 
 static void update_slots(void) {
@@ -39,18 +42,29 @@ static void update_slots(void) {
       case PARKING_EVENT_SLOT_OCCUPIED:
         ESP_LOGI(TAG, "Slot %d became OCCUPIED", slots[i].config.id);
         break;
+
       case PARKING_EVENT_SLOT_FREED:
         ESP_LOGI(TAG, "Slot %d became FREE", slots[i].config.id);
         break;
+
       case PARKING_EVENT_NONE:
         break;
     }
+
     ESP_LOGD(TAG,
       "Slot %d | Distance: %.2f cm | State: %s",
       slots[i].config.id,
       slots[i].distance_cm,
       parking_state_to_string(slots[i].state));
   }
+
+  parking_lot_update_counts(&parking_lot);
+
+  ESP_LOGI(TAG,
+    "Parking Lot | Total: %zu | Occupied: %zu | Available: %zu",
+    parking_lot_get_total(&parking_lot),
+    parking_lot_get_occupied(&parking_lot),
+    parking_lot_get_available(&parking_lot));
 }
 
 void app_main(void) {
