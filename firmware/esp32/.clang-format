@@ -4,6 +4,8 @@ IndentWidth: 2
 TabWidth: 2
 UseTab: Never
 
+IndentCaseLabels: true
+
 ColumnLimit: 100
 
 AlignAfterOpenBracket: DontAlign
@@ -21,5 +23,5 @@ BreakBeforeBraces: Attach
 
 SpaceBeforeAssignmentOperators: true
 
-AccessModifierOffset: -4
+AccessModifierOffset: -2
 NamespaceIndentation: None

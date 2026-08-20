@@ -12,28 +12,45 @@ esp_err_t parking_slot_init(parking_slot_t* slot, const parking_slot_config_t* c
   return ultrasonic_init(&slot->sensor, &slot->config.sensor);
 }
 
-void parking_slot_update(parking_slot_t* slot, float distance_cm) {
+parking_event_t parking_slot_update(parking_slot_t* slot, float distance_cm) {
+  if (slot == NULL) {
+    return PARKING_EVENT_NONE;
+  }
   slot->distance_cm = distance_cm;
 
-  if (distance_cm <= slot->config.occupied_threshold_cm) {
-    slot->state = PARKING_OCCUPIED;
-  } else {
-    slot->state = PARKING_FREE;
+  switch (slot->state) {
+    case PARKING_FREE:
+      if (distance_cm <= slot->config.occupied_threshold_cm) {
+        slot->state = PARKING_OCCUPIED;
+        return PARKING_EVENT_SLOT_OCCUPIED;
+      }
+      break;
+
+    case PARKING_OCCUPIED:
+      if (distance_cm >= slot->config.free_threshold_cm) {
+        slot->state = PARKING_FREE;
+        return PARKING_EVENT_SLOT_FREED;
+      }
+      break;
+
+    case PARKING_ERROR:
+      break;
   }
+  return PARKING_EVENT_NONE;
 }
 
 const char* parking_state_to_string(parking_state_t state) {
   switch (state) {
-  case PARKING_FREE:
-    return "FREE";
+    case PARKING_FREE:
+      return "FREE";
 
-  case PARKING_OCCUPIED:
-    return "OCCUPIED";
+    case PARKING_OCCUPIED:
+      return "OCCUPIED";
 
-  case PARKING_ERROR:
-    return "ERROR";
+    case PARKING_ERROR:
+      return "ERROR";
 
-  default:
-    return "UNKNOWN";
+    default:
+      return "UNKNOWN";
   }
 }

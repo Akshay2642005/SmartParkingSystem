@@ -6,11 +6,15 @@
 		{
 			"type": "board-esp32-devkit-c-v4",
 			"id": "esp",
+			"top": 86.4,
+			"left": -158.36,
 			"attrs": {}
 		},
 		{
 			"type": "wokwi-hc-sr04",
 			"id": "sensor1",
+			"top": 193.5,
+			"left": -13.7,
 			"attrs": {
 				"distance": "10"
 			}
@@ -18,6 +22,8 @@
 		{
 			"type": "wokwi-hc-sr04",
 			"id": "sensor2",
+			"top": 59.1,
+			"left": -13.7,
 			"attrs": {
 				"distance": "100"
 			}
@@ -25,6 +31,8 @@
 		{
 			"type": "wokwi-hc-sr04",
 			"id": "sensor3",
+			"top": -56.1,
+			"left": -4.1,
 			"attrs": {
 				"distance": "100"
 			}
@@ -34,72 +42,87 @@
 		[
 			"esp:TX",
 			"$serialMonitor:RX",
-			""
+			"",
+			[]
 		],
 		[
 			"esp:RX",
 			"$serialMonitor:TX",
-			""
+			"",
+			[]
 		],
 		[
 			"sensor1:VCC",
 			"esp:5V",
-			"red"
+			"red",
+			[]
 		],
 		[
 			"sensor1:GND",
 			"esp:GND.1",
-			"black"
+			"black",
+			[]
 		],
 		[
 			"sensor1:TRIG",
 			"esp:5",
-			"green"
+			"green",
+			[]
 		],
 		[
 			"sensor1:ECHO",
 			"esp:18",
-			"blue"
+			"blue",
+			[]
 		],
 		[
 			"sensor2:VCC",
 			"esp:5V",
-			"red"
+			"red",
+			[]
 		],
 		[
 			"sensor2:GND",
 			"esp:GND.2",
-			"black"
+			"black",
+			[]
 		],
 		[
 			"sensor2:TRIG",
 			"esp:19",
-			"green"
+			"green",
+			[]
 		],
 		[
 			"sensor2:ECHO",
 			"esp:21",
-			"blue"
+			"blue",
+			[]
 		],
 		[
 			"sensor3:VCC",
 			"esp:5V",
-			"red"
+			"red",
+			[]
 		],
 		[
 			"sensor3:GND",
 			"esp:GND.3",
-			"black"
+			"black",
+			[]
 		],
 		[
 			"sensor3:TRIG",
 			"esp:22",
-			"green"
+			"green",
+			[]
 		],
 		[
 			"sensor3:ECHO",
 			"esp:23",
-			"blue"
+			"blue",
+			[]
 		]
-	]
+	],
+	"dependencies": {}
 }

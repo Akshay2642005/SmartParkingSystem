@@ -33,9 +33,19 @@ static void update_slots(void) {
       continue;
     }
 
-    parking_slot_update(&slots[i], distance_cm);
+    parking_event_t event = parking_slot_update(&slots[i], distance_cm);
 
-    ESP_LOGI(TAG,
+    switch (event) {
+      case PARKING_EVENT_SLOT_OCCUPIED:
+        ESP_LOGI(TAG, "Slot %d became OCCUPIED", slots[i].config.id);
+        break;
+      case PARKING_EVENT_SLOT_FREED:
+        ESP_LOGI(TAG, "Slot %d became FREE", slots[i].config.id);
+        break;
+      case PARKING_EVENT_NONE:
+        break;
+    }
+    ESP_LOGD(TAG,
       "Slot %d | Distance: %.2f cm | State: %s",
       slots[i].config.id,
       slots[i].distance_cm,
