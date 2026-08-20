@@ -1,5 +1,9 @@
 #include "parking.h"
 
+#include "esp_log.h"
+
+static const char* TAG = "parking";
+
 esp_err_t parking_slot_init(parking_slot_t* slot, const parking_slot_config_t* config) {
   if (slot == NULL || config == NULL) {
     return ESP_ERR_INVALID_ARG;
@@ -39,6 +43,12 @@ parking_event_t parking_slot_update(parking_slot_t* slot, float distance_cm) {
   }
 
   return PARKING_EVENT_NONE;
+}
+
+void parking_slot_mark_error(parking_slot_t* slot) {
+  if (slot != NULL) {
+    slot->state = PARKING_ERROR;
+  }
 }
 
 const char* parking_state_to_string(parking_state_t state) {
@@ -84,6 +94,56 @@ void parking_lot_update_counts(parking_lot_t* lot) {
   }
 
   lot->available_count = lot->slot_count - lot->occupied_count;
+}
+
+esp_err_t parking_lot_scan(parking_lot_t* lot) {
+  if (lot == NULL || lot->slots == NULL) {
+    return ESP_ERR_INVALID_ARG;
+  }
+
+  for (size_t i = 0; i < lot->slot_count; i++) {
+    parking_slot_t* slot = &lot->slots[i];
+    float distance_cm;
+
+    esp_err_t result = ultrasonic_measure_cm(&slot->sensor, &distance_cm);
+
+    if (result != ESP_OK) {
+      parking_slot_mark_error(slot);
+      ESP_LOGE(TAG, "Slot %d | Sensor error: %s", slot->config.id, esp_err_to_name(result));
+      continue;
+    }
+
+    parking_event_t event = parking_slot_update(slot, distance_cm);
+
+    switch (event) {
+      case PARKING_EVENT_SLOT_OCCUPIED:
+        ESP_LOGI(TAG, "Slot %d became OCCUPIED", slot->config.id);
+        break;
+
+      case PARKING_EVENT_SLOT_FREED:
+        ESP_LOGI(TAG, "Slot %d became FREE", slot->config.id);
+        break;
+
+      case PARKING_EVENT_NONE:
+        break;
+    }
+
+    ESP_LOGD(TAG,
+      "Slot %d | Distance: %.2f cm | State: %s",
+      slot->config.id,
+      slot->distance_cm,
+      parking_state_to_string(slot->state));
+  }
+
+  parking_lot_update_counts(lot);
+
+  ESP_LOGI(TAG,
+    "Parking Lot | Total: %zu | Occupied: %zu | Available: %zu",
+    parking_lot_get_total(lot),
+    parking_lot_get_occupied(lot),
+    parking_lot_get_available(lot));
+
+  return ESP_OK;
 }
 
 size_t parking_lot_get_total(const parking_lot_t* lot) {

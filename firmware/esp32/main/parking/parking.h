@@ -43,8 +43,11 @@ esp_err_t parking_slot_init(parking_slot_t* slot, const parking_slot_config_t* c
 
 parking_event_t parking_slot_update(parking_slot_t* slot, float distance_cm);
 
+void parking_slot_mark_error(parking_slot_t* slot);
+
 void parking_lot_init(parking_lot_t* lot, parking_slot_t* slots, size_t slot_count);
 void parking_lot_update_counts(parking_lot_t* lot);
+esp_err_t parking_lot_scan(parking_lot_t* lot);
 
 size_t parking_lot_get_total(const parking_lot_t* lot);
 size_t parking_lot_get_occupied(const parking_lot_t* lot);

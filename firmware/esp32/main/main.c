@@ -8,7 +8,6 @@
 
 #include "parking.h"
 #include "parking_config.h"
-#include "ultrasonic.h"
 
 static const char* TAG = "parking";
 
@@ -23,50 +22,6 @@ static void initialize_slots(void) {
   parking_lot_init(&parking_lot, slots, PARKING_SLOT_COUNT);
 }
 
-static void update_slots(void) {
-  for (int i = 0; i < PARKING_SLOT_COUNT; i++) {
-    float distance_cm;
-
-    esp_err_t result = ultrasonic_measure_cm(&slots[i].sensor, &distance_cm);
-
-    if (result != ESP_OK) {
-      ESP_LOGE(TAG, "Slot %d | Sensor error: %s", slots[i].config.id, esp_err_to_name(result));
-
-      slots[i].state = PARKING_ERROR;
-      continue;
-    }
-
-    parking_event_t event = parking_slot_update(&slots[i], distance_cm);
-
-    switch (event) {
-      case PARKING_EVENT_SLOT_OCCUPIED:
-        ESP_LOGI(TAG, "Slot %d became OCCUPIED", slots[i].config.id);
-        break;
-
-      case PARKING_EVENT_SLOT_FREED:
-        ESP_LOGI(TAG, "Slot %d became FREE", slots[i].config.id);
-        break;
-
-      case PARKING_EVENT_NONE:
-        break;
-    }
-
-    ESP_LOGD(TAG,
-      "Slot %d | Distance: %.2f cm | State: %s",
-      slots[i].config.id,
-      slots[i].distance_cm,
-      parking_state_to_string(slots[i].state));
-  }
-
-  parking_lot_update_counts(&parking_lot);
-
-  ESP_LOGI(TAG,
-    "Parking Lot | Total: %zu | Occupied: %zu | Available: %zu",
-    parking_lot_get_total(&parking_lot),
-    parking_lot_get_occupied(&parking_lot),
-    parking_lot_get_available(&parking_lot));
-}
-
 void app_main(void) {
   printf("\n");
   printf("====================================\n");
@@ -78,7 +33,7 @@ void app_main(void) {
   ESP_LOGI(TAG, "Initialized %d parking slots", PARKING_SLOT_COUNT);
 
   while (1) {
-    update_slots();
+    ESP_ERROR_CHECK(parking_lot_scan(&parking_lot));
 
     vTaskDelay(pdMS_TO_TICKS(1000));
   }
