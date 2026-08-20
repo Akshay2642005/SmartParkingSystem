@@ -24,9 +24,10 @@ This is confirmed by the repository:
 - `firmware/esp32/main/parking/parking_config.c` maps one sensor per slot.
 
 A slot is considered **occupied** when the measured distance is at or below
-`occupied_threshold_cm` (30 cm) and **free** when above `free_threshold_cm`
-(40 cm). Hysteresis between the two thresholds prevents state flapping on
-noise.
+`occupied_threshold_cm` (30 cm) and **free** when at or above `free_threshold_cm`
+(35 cm). Hysteresis between the two thresholds prevents state flapping on
+noise. The driver converts the ECHO round-trip time to a one-way distance using
+a constant sound speed (0.0343 cm/µs).
 
 ## Alternatives Considered
 

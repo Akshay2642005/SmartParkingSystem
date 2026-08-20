@@ -17,61 +17,66 @@ How should a parking slot's occupancy be modeled as a state machine?
 Use the following occupancy state machine, implemented in the firmware:
 
 ```text
-UNKNOWN
-   │
-   │ first valid reading
-   ▼
 FREE ─────────────┐
    │              │
    │ distance      │ distance ≤
-   │ > free_thr    │ occupied_thr
+   │ ≥ free_thr    │ occupied_thr
    ▼              │
 OCCUPIED ─────────┘
    │
-   │ invalid reading
+   │ measurement failure
    ▼
-ERROR (recovers to FREE/OCCUPIED on next valid reading)
+ERROR  (sticky until a future recovery phase re-measures the slot)
 ```
 
 States:
 
-- **UNKNOWN**: startup state until a valid sensor reading is available.
 - **FREE**: slot is available.
 - **OCCUPIED**: slot is in use.
-- **ERROR**: invalid or out-of-range reading, or sensor failure.
+- **ERROR**: sensor measurement failure; occupancy is unknown.
 
-## Transition Semantics (firmware implementation)
+## Transition Semantics (current firmware implementation)
 
-- On startup, a slot begins in `UNKNOWN` (`parking_slot_init`).
-- A reading at or below `occupied_threshold_cm` transitions to `OCCUPIED`.
-- From `OCCUPIED`, a reading above `free_threshold_cm` transitions to `FREE`.
-  The gap between `occupied_threshold_cm` (30 cm) and `free_threshold_cm`
-  (40 cm) provides **hysteresis** and prevents state flapping on noise.
-- A reading outside the valid range (below 2 cm or above 400 cm) sets `ERROR`.
-- `ERROR` recovers to `FREE` or `OCCUPIED` on the next valid reading.
-- A sensor measurement failure sets `ERROR` via `parking_slot_mark_error`.
+- On startup, a slot begins in `PARKING_FREE` (`parking_slot_init`).
+- `FREE` → `OCCUPIED` when `distance_cm <= occupied_threshold_cm` (30 cm).
+- `OCCUPIED` → `FREE` when `distance_cm >= free_threshold_cm` (35 cm).
+- The gap between `occupied_threshold_cm` (30 cm) and `free_threshold_cm`
+  (35 cm) provides **hysteresis** and prevents state flapping on noise.
+- A measurement failure sets `ERROR` via `parking_slot_mark_error`; the slot is
+  not considered FREE or OCCUPIED while in `ERROR`.
+- `ERROR` is currently **sticky**: no recovery transition exists yet.
+  Deterministic `ERROR → FREE` / `ERROR → OCCUPIED` recovery is planned (Phase 5
+  of the Local Embedded Logic Improvements) and must not emit spurious
+  OCCUPIED/FREED events.
+
+## Events
+
+State changes emit events (`PARKING_EVENT_SLOT_OCCUPIED`, `PARKING_EVENT_SLOT_FREED`)
+returned by `parking_slot_update()`. `ERROR` transitions do not emit an
+occupancy event. Event representation is evolving in Phase 6 of the Local
+Embedded Logic Improvements.
 
 ## Behavior for Edge Conditions
 
 | Condition | Behavior |
 | --------- | -------- |
-| Invalid sensor reading | `ERROR` state; no crash (`FR-012`) |
-| Out-of-range reading (< 2 cm or > 400 cm) | `ERROR` state |
-| Sensor timeout / measurement failure | `ERROR` via `parking_slot_mark_error` |
+| Measurement timeout / failure | `ERROR` via `parking_slot_mark_error` (`FR-012`) |
 | Device offline | Backend retains last known state (backend not yet implemented) |
-| Startup | `UNKNOWN` until a valid reading is available |
+| Startup | `FREE` until the first measurement completes |
 | Threshold noise / ambiguous readings | Hysteresis prevents flapping |
+| Sensor range validation (< 2 cm / > 400 cm) | Planned (Phase 4) — not yet implemented |
 
 ## Consequences
 
 ### Positive
 
 - Clear, implemented, testable state model (`FR-002`, `FR-011`).
-- Explicit startup and failure handling.
+- Explicit failure state that never fabricates occupancy.
 
 ### Negative
 
-- State semantics must be kept consistent when the backend is implemented.
+- `ERROR` slots have no automatic recovery yet; recovery requires the planned
+  Phase 5 state-machine work.
 
 ## Validation
 
@@ -85,3 +90,4 @@ States:
 - `../architecture/firmware-architecture.md`
 - `../architecture/database.md`
 - `../planning/PLAN.md` (M2, M4)
+- `PROMPT.md` (Phase 5 — Improve Parking Slot State Machine)

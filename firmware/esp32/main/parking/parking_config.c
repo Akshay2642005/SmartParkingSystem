@@ -1,5 +1,13 @@
 #include "parking_config.h"
 
+/**
+ * Per-slot hardware configuration (GPIO + occupancy thresholds).
+ *
+ * GPIO mapping matches the Wokwi diagram (diagram.json) and
+ * docs/specs/architecture/hardware-architecture.md. Thresholds per
+ * docs/specs/decisions/ADR-0004-sensor-selection.md (occupied = 30 cm,
+ * free = 35 cm; hysteresis gap prevents state flapping).
+ */
 const parking_slot_config_t slot_configs[PARKING_SLOT_COUNT] = {
   {
     .id = 1,

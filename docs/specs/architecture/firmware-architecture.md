@@ -1,30 +1,32 @@
 # Firmware Architecture
 
-Status: **Current** (M2 — Sensor Layer partially implemented)
+Status: **Current** (M2 — Sensor Layer; local domain being hardened)
 
-This document describes the ESP-IDF firmware architecture. The sensor and
-parking-state modules are implemented; connectivity and telemetry are not yet.
+This document describes the ESP-IDF firmware architecture. The sensor driver,
+parking state machine, lot model, and scan API are implemented; connectivity and
+telemetry are not yet.
 
-## Target Layer Structure
+## Layer Structure
 
 ```text
-Application (main.c)
+Application (main.c) — orchestration only
     │
     ▼
-Domain / Parking State (parking/parking.c)
+Parking Domain (parking/parking.c)
+    │  parking_lot_scan()
+    ├── slot 1 ──► sensor + state machine + events
+    ├── slot 2 ──► sensor + state machine + events
+    └── slot 3 ──► sensor + state machine + events
     │
     ▼
-Services
-    ├── Sensor Manager      (main.c update_slots)
-    ├── Connectivity        (not yet implemented)
-    ├── Telemetry           (not yet implemented)
-    └── Configuration       (parking/parking_config.c)
+parking_lot_update_counts() → statistics
+    │
+    ▼
+Configuration (parking/parking_config.c)
     │
     ▼
 Drivers
-    ├── Sensor              (sensors/ultrasonic.c)
-    ├── GPIO                (via esp_driver_gpio)
-    └── Other hardware      (none yet)
+    └── Sensor (sensors/ultrasonic.c)
     │
     ▼
 ESP-IDF / FreeRTOS
@@ -34,40 +36,53 @@ ESP-IDF / FreeRTOS
 
 ### app_main
 
-- `main/main.c` initializes slots and runs a single loop.
-- Each loop iteration samples every sensor and updates slot state.
+- `main/main.c` initializes the slots and runs a single periodic loop.
+- It contains no parking implementation details; it only calls
+  `parking_lot_scan()` each cycle (`FR-010`).
+
+### Parking Lot Scan
+
+- `parking_lot_scan()` in `parking/parking.c` owns the full scan cycle:
+  iterating slots, measuring each ultrasonic sensor, handling measurement
+  failures (slot → `ERROR`, scan continues), updating slot state, processing
+  state-change events, and refreshing lot statistics.
 
 ### Tasks & Scheduling
 
 - A single task runs `app_main`'s loop with a 1 s delay between cycles.
-- Per-slot sampling is sequential.
-- Dedicated FreeRTOS tasks for connectivity/telemetry: not yet implemented.
+- A dedicated parking task and configurable scan interval are planned
+  (Phases 13–14).
 
 ### Parking State Machine
 
-- Implemented in `parking/parking.c` (UNKNOWN/FREE/OCCUPIED/ERROR).
+- Implemented in `parking/parking.c` (FREE/OCCUPIED/ERROR) with hysteresis
+  (occupied 30 cm / free 35 cm).
 - See `../decisions/ADR-0007-parking-state-model.md`.
+
+### Events
+
+- `parking_slot_update()` returns `parking_event_t`
+  (`PARKING_EVENT_SLOT_OCCUPIED` / `PARKING_EVENT_SLOT_FREED`).
+- Events drive INFO logging; detailed measurements are logged at DEBUG.
 
 ### Slot Configuration
 
 - Slot count, GPIO, and thresholds live in `parking/parking_config.c`
   (declared in `parking/parking_config.h`).
 
-### Sensor Sampling
-
-- `main.c:update_slots` samples each sensor via `ultrasonic_measure_cm` and
-  passes the distance to `parking_slot_update` (`FR-010`, `FR-011`).
-
 ### Error Handling
 
-- Invalid/out-of-range readings set `ERROR` via `parking_slot_update`.
-- Measurement failures call `parking_slot_mark_error` (`FR-012`).
-- Invalid GPIO configuration is rejected by `ultrasonic_init`.
+- Measurement failures call `parking_slot_mark_error` (`FR-012`); the scan
+  continues with the other slots.
+- Sensor init failure is treated as a fatal configuration error
+  (`ESP_ERROR_CHECK`).
+- Range validation of measurements is planned (Phase 4).
 
 ### Logging
 
-- `ESP_LOGI` per slot update and `ESP_LOGE` on sensor errors (TAG `parking`).
-- Provided by the `log` component (declared in `main/CMakeLists.txt`).
+- Tags: `parking` (state/events), `ultrasonic` (sensor lifecycle).
+- Levels: INFO for events/system status, DEBUG for per-slot measurements,
+  ERROR for failures.
 
 ### Configuration
 
@@ -100,3 +115,4 @@ ESP-IDF / FreeRTOS
 - `hardware-architecture.md`
 - `../quality/TEST_PLAN.md`
 - `../planning/PLAN.md` (M1, M2, M3)
+- `PROMPT.md` (Local Embedded Logic Improvements)

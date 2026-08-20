@@ -1,6 +1,6 @@
 # Smart Parking System — Requirements
 
-Status: **Current** (M0 — Specification baseline)
+Status: **Current** (M2 — Sensor Layer)
 
 This document specifies functional and non-functional requirements using stable
 identifiers. Requirements describe **intended** behavior. Whether a requirement
@@ -32,7 +32,8 @@ Status of each requirement: `Planned` unless noted otherwise.
   Status: Current (`parking_slot_update`)
 - **FR-012** — The firmware shall handle invalid sensor readings without
   crashing.
-  Status: Current (range validation + ERROR state)
+  Status: Partial — measurement failures set `ERROR` and the scan continues;
+  measurement range validation is Planned (Phase 4)
 
 ### Connectivity
 

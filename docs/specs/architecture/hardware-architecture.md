@@ -30,11 +30,11 @@ Parking Slot 1   Parking Slot 2   Parking Slot 3
 Confirmed by `firmware/esp32/diagram.json` and
 `firmware/esp32/main/parking/parking_config.c`:
 
-| Slot | TRIG GPIO | ECHO GPIO | Occupied ≤ | Free > |
+| Slot | TRIG GPIO | ECHO GPIO | Occupied ≤ | Free ≥ |
 | ---- | --------- | --------- | ---------- | ------ |
-| 1 | 5 | 18 | 30 cm | 40 cm |
-| 2 | 19 | 21 | 30 cm | 40 cm |
-| 3 | 22 | 23 | 30 cm | 40 cm |
+| 1 | 5 | 18 | 30 cm | 35 cm |
+| 2 | 19 | 21 | 30 cm | 35 cm |
+| 3 | 22 | 23 | 30 cm | 35 cm |
 
 ## Physical Topology
 

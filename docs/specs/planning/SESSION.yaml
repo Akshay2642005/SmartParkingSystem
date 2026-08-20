@@ -5,12 +5,16 @@ session:
     - M0 — Specification baseline
     - M1 — ESP32 Foundation (firmware boots, clean build, Wokwi)
     - Ultrasonic (HC-SR04) sensor driver
-    - Parking state machine (UNKNOWN/FREE/OCCUPIED/ERROR)
+    - Parking state machine (FREE/OCCUPIED/ERROR) with hysteresis
+    - State-change events (OCCUPIED/FREED)
+    - Parking lot model + statistics (total/occupied/available)
+    - parking_lot_scan() API (polling moved out of main.c)
     - Slot configuration (3 slots, per-slot GPIO + thresholds)
   in_progress:
-    - M2 — Sensor Layer verification
-    - Firmware code-quality review and fixes
+    - M2 — Sensor Layer hardening (Local Embedded Logic Improvements)
+    - Firmware code documentation and spec synchronization
   next:
+    - Phase 3 — Improve Ultrasonic Sensor Abstraction
     - Verify sensor integration in Wokwi
     - Decide device communication protocol (ADR-0005)
     - Begin M3 — Device Platform
