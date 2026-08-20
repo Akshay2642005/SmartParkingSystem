@@ -18,7 +18,7 @@ Use an **HC-SR04 ultrasonic sensor** (one per parking slot).
 This is confirmed by the repository:
 
 - `firmware/esp32/main/sensors/ultrasonic.c` implements an HC-SR04 driver
-  (trigger/echo timing, 58 µs/cm conversion).
+  (trigger/echo timing, constant sound-speed conversion).
 - `firmware/esp32/diagram.json` connects three `wokwi-hc-sr04` parts to the
   ESP32.
 - `firmware/esp32/main/parking/parking_config.c` maps one sensor per slot.
@@ -28,6 +28,29 @@ A slot is considered **occupied** when the measured distance is at or below
 (35 cm). Hysteresis between the two thresholds prevents state flapping on
 noise. The driver converts the ECHO round-trip time to a one-way distance using
 a constant sound speed (0.0343 cm/µs).
+
+## Driver Limits and Error Semantics
+
+The driver (`sensors/ultrasonic.c`) defines the following named constants and
+returns the corresponding `esp_err_t` values instead of crashing:
+
+| Aspect | Value |
+| ------ | ----- |
+| Minimum distance | 2 cm (`ULTRASONIC_MIN_DISTANCE_CM`) |
+| Maximum distance | 400 cm (`ULTRASONIC_MAX_DISTANCE_CM`) |
+| Measurement timeout | 30 ms (`ULTRASONIC_TIMEOUT_US`) |
+| Sound speed | 0.0343 cm/µs (`SOUND_SPEED_CM_PER_US`) |
+| TRIG pulse / idle | 10 µs / 2 µs |
+
+- Invalid arguments or invalid GPIO wiring (out of range, TRIG == ECHO) return
+  `ESP_ERR_INVALID_ARG` from `ultrasonic_init()`.
+- GPIO configuration or init failures are propagated as errors, not fatal.
+- A missing ECHO pulse (or a distance beyond 400 cm) returns `ESP_ERR_TIMEOUT`.
+- An implausible reading (below 2 cm, or an inconsistent pulse) returns
+  `ESP_ERR_INVALID_RESPONSE`.
+
+These errors are handled upstream by the parking domain (`FR-012`): a failed
+measurement marks the slot `ERROR` and the scan continues.
 
 ## Alternatives Considered
 

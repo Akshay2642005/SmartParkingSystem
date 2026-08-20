@@ -32,8 +32,7 @@ Status of each requirement: `Planned` unless noted otherwise.
   Status: Current (`parking_slot_update`)
 - **FR-012** — The firmware shall handle invalid sensor readings without
   crashing.
-  Status: Partial — measurement failures set `ERROR` and the scan continues;
-  measurement range validation is Planned (Phase 4)
+  Status: Current (range validation + measurement-failure -> ERROR state)
 
 ### Connectivity
 

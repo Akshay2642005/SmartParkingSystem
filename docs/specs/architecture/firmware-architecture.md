@@ -74,9 +74,11 @@ ESP-IDF / FreeRTOS
 
 - Measurement failures call `parking_slot_mark_error` (`FR-012`); the scan
   continues with the other slots.
+- The ultrasonic driver validates arguments, GPIO wiring, and measurement
+  range (2–400 cm), returning `ESP_ERR_TIMEOUT` / `ESP_ERR_INVALID_RESPONSE` /
+  `ESP_ERR_INVALID_ARG` rather than crashing.
 - Sensor init failure is treated as a fatal configuration error
   (`ESP_ERROR_CHECK`).
-- Range validation of measurements is planned (Phase 4).
 
 ### Logging
 

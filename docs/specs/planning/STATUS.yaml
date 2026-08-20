@@ -17,6 +17,8 @@ completed:
   - Parking lot model + statistics (total/occupied/available)
   - parking_lot_scan() API (polling moved out of main.c)
   - Parking slot configuration (3 slots, per-slot GPIO + thresholds)
+  - Phase 3 — Ultrasonic sensor abstraction (GPIO validation, measurement
+    range 2-400 cm, named constants, non-fatal error returns)
 
 in_progress:
   - M2 — Sensor Layer hardening (Local Embedded Logic Improvements)
