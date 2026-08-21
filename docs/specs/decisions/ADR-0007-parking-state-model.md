@@ -17,44 +17,61 @@ How should a parking slot's occupancy be modeled as a state machine?
 Use the following occupancy state machine, implemented in the firmware:
 
 ```text
-FREE ─────────────┐
-   │              │
-   │ distance      │ distance ≤
-   │ ≥ free_thr    │ occupied_thr
-   ▼              │
-OCCUPIED ─────────┘
+FREE ◄──────────────┐
+   │                │
+   │ distance       │ distance ≤
+   │ ≥ free_thr     │ occupied_thr
+   ▼                │
+OCCUPIED ───────────┘
    │
-   │ measurement failure
+   │ measurement failure / invalid reading
    ▼
-ERROR  (sticky until a future recovery phase re-measures the slot)
+ERROR ── first valid measurement ──► FREE / OCCUPIED / restore pre-error state
 ```
 
 States:
 
 - **FREE**: slot is available.
 - **OCCUPIED**: slot is in use.
-- **ERROR**: sensor measurement failure; occupancy is unknown.
+- **ERROR**: sensor measurement failure or invalid reading; occupancy is unknown.
 
 ## Transition Semantics (current firmware implementation)
 
-- On startup, a slot begins in `PARKING_FREE` (`parking_slot_init`).
+- On startup, a slot begins in `PARKING_FREE` (`parking_slot_init`), with
+  `state_before_error = FREE`.
 - `FREE` → `OCCUPIED` when `distance_cm <= occupied_threshold_cm` (30 cm).
 - `OCCUPIED` → `FREE` when `distance_cm >= free_threshold_cm` (35 cm).
 - The gap between `occupied_threshold_cm` (30 cm) and `free_threshold_cm`
   (35 cm) provides **hysteresis** and prevents state flapping on noise.
-- A measurement failure sets `ERROR` via `parking_slot_mark_error`; the slot is
-  not considered FREE or OCCUPIED while in `ERROR`.
-- `ERROR` is currently **sticky**: no recovery transition exists yet.
-  Deterministic `ERROR → FREE` / `ERROR → OCCUPIED` recovery is planned (Phase 5
-  of the Local Embedded Logic Improvements) and must not emit spurious
-  OCCUPIED/FREED events.
+- A measurement failure or invalid reading sets `ERROR` via
+  `parking_slot_mark_error`; the slot is not considered FREE or OCCUPIED while
+  in `ERROR`.
+- `parking_slot_mark_error` is **idempotent**: the pre-error state is captured
+  only on the first failure, so repeated failures cannot overwrite the recovery
+  target.
+
+### ERROR Recovery (deterministic)
+
+On the first valid measurement after `ERROR`, `parking_slot_update()` decides:
+
+| Recovery reading | New state | Event |
+| ---------------- | --------- | ----- |
+| ≤ 30 cm (`occupied_threshold`) | OCCUPIED | only if pre-error state was FREE |
+| ≥ 35 cm (`free_threshold`) | FREE | only if pre-error state was OCCUPIED |
+| 30–35 cm (hysteresis band) | restore pre-error state (`state_before_error`) | never |
+
+Recovering to the same state the slot had before the failure is not an
+occupancy change and emits no event; recovering to the other state means the
+occupancy changed during the outage and emits the corresponding event.
+Debouncing of recovery readings is out of scope (planned: occupancy debouncing).
 
 ## Events
 
 State changes emit events (`PARKING_EVENT_SLOT_OCCUPIED`, `PARKING_EVENT_SLOT_FREED`)
-returned by `parking_slot_update()`. `ERROR` transitions do not emit an
-occupancy event. Event representation is evolving in Phase 6 of the Local
-Embedded Logic Improvements.
+returned by `parking_slot_update()`. `FREE → ERROR` transitions do not emit an
+occupancy event. Recovery from `ERROR` emits an event only for a real occupancy
+change (see table above). Event representation is evolving in Phase 6 of the
+Local Embedded Logic Improvements.
 
 ## Behavior for Edge Conditions
 
@@ -72,11 +89,13 @@ Embedded Logic Improvements.
 
 - Clear, implemented, testable state model (`FR-002`, `FR-011`).
 - Explicit failure state that never fabricates occupancy.
+- Deterministic `ERROR` recovery with no spurious events.
 
 ### Negative
 
-- `ERROR` slots have no automatic recovery yet; recovery requires the planned
-  Phase 5 state-machine work.
+- A slot in the hysteresis band right after recovery silently restores its
+  pre-error state; a genuinely changed occupancy inside the band is detected
+  only once the reading leaves the band.
 
 ## Validation
 

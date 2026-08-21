@@ -57,6 +57,9 @@ ESP-IDF / FreeRTOS
 
 - Implemented in `parking/parking.c` (FREE/OCCUPIED/ERROR) with hysteresis
   (occupied 30 cm / free 35 cm).
+- `ERROR` recovers deterministically on the first valid measurement; events
+  fire only for real occupancy changes (recovery to the pre-error state is
+  silent).
 - See `../decisions/ADR-0007-parking-state-model.md`.
 
 ### Events

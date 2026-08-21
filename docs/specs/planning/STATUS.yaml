@@ -21,6 +21,8 @@ completed:
     range 2-400 cm, named constants, non-fatal error returns)
   - Phase 4 — Sensor measurement validation (invalid readings -> ERROR,
     never silently FREE/OCCUPIED)
+  - Phase 5 — Parking slot state machine (deterministic ERROR recovery,
+    pre-error state restore, no spurious events)
 
 in_progress:
   - M2 — Sensor Layer hardening (Local Embedded Logic Improvements)

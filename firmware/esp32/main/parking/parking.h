@@ -38,10 +38,11 @@ typedef struct {
 
 /** Runtime state of a single parking slot. */
 typedef struct {
-  parking_slot_config_t config; /**< Slot configuration (copied at init). */
-  ultrasonic_sensor_t sensor;   /**< Sensor instance, initialized at slot init. */
-  parking_state_t state;        /**< Current occupancy state. */
-  float distance_cm;            /**< Latest measured distance. */
+  parking_slot_config_t config;       /**< Slot configuration (copied at init). */
+  ultrasonic_sensor_t sensor;         /**< Sensor instance, initialized at slot init. */
+  parking_state_t state;              /**< Current occupancy state. */
+  parking_state_t state_before_error; /**< Stable state to restore after ERROR recovery. */
+  float distance_cm;                  /**< Latest measured distance. */
 } parking_slot_t;
 
 /** Aggregate view over all slots in the lot. */
@@ -67,9 +68,14 @@ esp_err_t parking_slot_init(parking_slot_t* slot, const parking_slot_config_t* c
  * Feed one measured distance into the slot state machine (FR-002, FR-011).
  *
  * Transition rules (ADR-0007):
- *   FREE:      distance <= occupied_threshold_cm  -> OCCUPIED
- *   OCCUPIED:  distance >= free_threshold_cm      -> FREE
- *   ERROR:     no transition until re-measured (recovery planned, Phase 5)
+ *   FREE:      distance <= occupied_threshold_cm -> OCCUPIED (SLOT_OCCUPIED)
+ *   OCCUPIED:  distance >= free_threshold_cm     -> FREE     (SLOT_FREED)
+ *   ERROR:     first valid measurement decides:
+ *                <= occupied_threshold_cm        -> OCCUPIED
+ *                >= free_threshold_cm            -> FREE
+ *                hysteresis band                 -> restore state_before_error
+ *              An event is emitted only when the recovered state differs
+ *              from state_before_error (a real occupancy change).
  * Hysteresis between the two thresholds prevents flapping on noise.
  *
  * @param slot        Slot to update.

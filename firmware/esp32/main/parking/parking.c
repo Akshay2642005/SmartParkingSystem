@@ -43,6 +43,7 @@ esp_err_t parking_slot_init(parking_slot_t* slot, const parking_slot_config_t* c
 
   slot->config = *config;
   slot->state = PARKING_FREE;
+  slot->state_before_error = PARKING_FREE;
   slot->distance_cm = 0.0f;
 
   // Initialize the slot's sensor; failure here is a fatal configuration error.
@@ -59,7 +60,7 @@ parking_event_t parking_slot_update(parking_slot_t* slot, float distance_cm) {
   // ADR-0007 transition rules with hysteresis:
   //   FREE:     distance <= occupied_threshold_cm -> OCCUPIED
   //   OCCUPIED: distance >= free_threshold_cm     -> FREE
-  //   ERROR:    sticky until recovered (recovery planned in Phase 5)
+  //   ERROR:    first valid measurement recovers (see case below)
   switch (slot->state) {
     case PARKING_FREE:
       if (distance_cm <= slot->config.occupied_threshold_cm) {
@@ -75,15 +76,44 @@ parking_event_t parking_slot_update(parking_slot_t* slot, float distance_cm) {
       }
       break;
 
-    case PARKING_ERROR:
+    case PARKING_ERROR: {
+      // Deterministic recovery from the first valid measurement.
+      parking_state_t recovered;
+
+      if (distance_cm <= slot->config.occupied_threshold_cm) {
+        recovered = PARKING_OCCUPIED;
+      } else if (distance_cm >= slot->config.free_threshold_cm) {
+        recovered = PARKING_FREE;
+      } else {
+        // Ambiguous hysteresis band: restore the pre-error state, no guess.
+        recovered = slot->state_before_error;
+      }
+
+      slot->state = recovered;
+
+      // Only a genuine occupancy change produces an event; recovering to the
+      // state the slot already had is silent.
+      if (recovered != slot->state_before_error) {
+        return recovered == PARKING_OCCUPIED ? PARKING_EVENT_SLOT_OCCUPIED
+                                             : PARKING_EVENT_SLOT_FREED;
+      }
+
       break;
+    }
   }
 
   return PARKING_EVENT_NONE;
 }
 
 void parking_slot_mark_error(parking_slot_t* slot) {
-  if (slot != NULL) {
+  if (slot == NULL) {
+    return;
+  }
+
+  // Idempotent: remember the last stable state only on the first failure,
+  // so repeated scan failures cannot overwrite the recovery target.
+  if (slot->state != PARKING_ERROR) {
+    slot->state_before_error = slot->state;
     slot->state = PARKING_ERROR;
   }
 }
