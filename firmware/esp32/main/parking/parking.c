@@ -1,5 +1,8 @@
 #include "parking.h"
 
+#include <math.h>
+#include <stdbool.h>
+
 #include "esp_log.h"
 
 /**
@@ -10,6 +13,28 @@
  */
 
 static const char* TAG = "parking";
+
+/**
+ * Validate a raw measurement before it may influence parking state.
+ *
+ * Rejects non-numeric values, zero/negative distances, and readings outside
+ * the HC-SR04 supported range. Invalid measurements must never be converted
+ * into FREE or OCCUPIED.
+ *
+ * Spec: PROMPT.md Phase 4, docs/specs/product/REQUIREMENTS.md (FR-012),
+ *       docs/specs/decisions/ADR-0004-sensor-selection.md (driver limits).
+ */
+static bool parking_measurement_is_valid(float distance_cm) {
+  if (!isfinite(distance_cm)) {
+    return false;
+  }
+
+  if (distance_cm <= 0.0f) {
+    return false;
+  }
+
+  return distance_cm >= ULTRASONIC_MIN_DISTANCE_CM && distance_cm <= ULTRASONIC_MAX_DISTANCE_CM;
+}
 
 esp_err_t parking_slot_init(parking_slot_t* slot, const parking_slot_config_t* config) {
   if (slot == NULL || config == NULL) {
@@ -124,6 +149,13 @@ esp_err_t parking_lot_scan(parking_lot_t* lot) {
       // Recoverable runtime error: mark the slot and keep scanning the rest.
       parking_slot_mark_error(slot);
       ESP_LOGE(TAG, "Slot %d | Sensor error: %s", slot->config.id, esp_err_to_name(result));
+      continue;
+    }
+
+    if (!parking_measurement_is_valid(distance_cm)) {
+      // Defense-in-depth: never feed invalid data into the state machine.
+      parking_slot_mark_error(slot);
+      ESP_LOGE(TAG, "Slot %d | Invalid measurement: %.2f cm", slot->config.id, distance_cm);
       continue;
     }
 

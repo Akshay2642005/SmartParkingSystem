@@ -19,6 +19,8 @@ completed:
   - Parking slot configuration (3 slots, per-slot GPIO + thresholds)
   - Phase 3 — Ultrasonic sensor abstraction (GPIO validation, measurement
     range 2-400 cm, named constants, non-fatal error returns)
+  - Phase 4 — Sensor measurement validation (invalid readings -> ERROR,
+    never silently FREE/OCCUPIED)
 
 in_progress:
   - M2 — Sensor Layer hardening (Local Embedded Logic Improvements)

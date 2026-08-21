@@ -64,7 +64,7 @@ Embedded Logic Improvements.
 | Device offline | Backend retains last known state (backend not yet implemented) |
 | Startup | `FREE` until the first measurement completes |
 | Threshold noise / ambiguous readings | Hysteresis prevents flapping |
-| Sensor range validation (< 2 cm / > 400 cm) | Planned (Phase 4) — not yet implemented |
+| Sensor range validation (< 2 cm / > 400 cm) | Implemented (`parking_measurement_is_valid`); invalid readings mark the slot `ERROR` |
 
 ## Consequences
 

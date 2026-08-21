@@ -72,6 +72,9 @@ ESP-IDF / FreeRTOS
 
 ### Error Handling
 
+- Measurement validation gates every reading before `parking_slot_update`;
+  invalid readings (non-numeric, zero/negative, outside 2–400 cm) mark the slot
+  `ERROR` and never become FREE or OCCUPIED.
 - Measurement failures call `parking_slot_mark_error` (`FR-012`); the scan
   continues with the other slots.
 - The ultrasonic driver validates arguments, GPIO wiring, and measurement

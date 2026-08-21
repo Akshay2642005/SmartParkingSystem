@@ -73,7 +73,9 @@ esp_err_t parking_slot_init(parking_slot_t* slot, const parking_slot_config_t* c
  * Hysteresis between the two thresholds prevents flapping on noise.
  *
  * @param slot        Slot to update.
- * @param distance_cm Measured one-way distance in centimeters.
+ * @param distance_cm Validated distance in centimeters (see
+ *                    parking_measurement_is_valid); callers must not pass
+ *                    unvalidated sensor output.
  * @return The event describing the state change, or PARKING_EVENT_NONE.
  */
 parking_event_t parking_slot_update(parking_slot_t* slot, float distance_cm);
