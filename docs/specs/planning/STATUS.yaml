@@ -39,6 +39,8 @@ completed:
     band readings reset counters, recovery stays immediate)
   - Phase 13 — Sensor polling timing (PARKING_SCAN_INTERVAL_MS constant,
     vTaskDelayUntil absolute scheduling)
+  - Phase 14 — Separate parking task (dedicated xTaskCreate'd scan task with
+    named stack size / priority constants; app_main returns after setup)
 
 in_progress:
   - M2 — Sensor Layer hardening (Local Embedded Logic Improvements)

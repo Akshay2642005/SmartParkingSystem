@@ -52,12 +52,17 @@ ESP-IDF / FreeRTOS
 
 ### Tasks & Scheduling
 
-- A single task runs `app_main`'s loop, scheduled with `vTaskDelayUntil`
-  against `PARKING_SCAN_INTERVAL_MS` (1 s): absolute-period scheduling keeps
-  the scan rate deterministic regardless of scan duration (worst case ≈ 90 ms
-  for three slots at full timeout vs. the 1000 ms period).
-- A dedicated parking task is planned
-  (Phase 14).
+- A dedicated parking task (`parking_task`, named `PARKING_TASK_NAME`) owns
+  the scan cycle: `xTaskCreate` from `app_main` with a 4 KiB stack
+  (`PARKING_TASK_STACK_SIZE`) and priority 5 (`PARKING_TASK_PRIORITY`),
+  above idle/log workers and below critical system tasks.
+- The task is scheduled with `vTaskDelayUntil` against
+  `PARKING_SCAN_INTERVAL_MS` (1 s): absolute-period scheduling keeps the scan
+  rate deterministic regardless of how long each scan takes (worst case ≈
+  90 ms for three slots at full timeout vs. the 1000 ms period).
+- `app_main` initializes slots, creates the task, and returns — it does not
+  participate in the scan loop. Task-creation failure aborts via
+  `ESP_ERROR_CHECK`.
 
 ### Parking State Machine
 

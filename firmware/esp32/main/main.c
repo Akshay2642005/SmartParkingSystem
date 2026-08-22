@@ -33,6 +33,26 @@ static void initialize_slots(void) {
     parking_lot_init(&parking_lot, slots, PARKING_SLOT_COUNT);
 }
 
+/**
+ * Periodic scan task — owns the full parking lot cycle.
+ *
+ * Runs forever at PARKING_SCAN_INTERVAL_MS with absolute scheduling
+ * (vTaskDelayUntil), so the scan rate stays deterministic regardless of how
+ * long each scan takes. Any sensor failure is non-fatal inside
+ * parking_lot_scan(); a hard ESP_ERROR_CHECK here means an unexpected bug.
+ *
+ * Created by app_main; never returns.
+ */
+static void parking_task(void* arg) {
+    (void)arg;
+    TickType_t last_wake_time = xTaskGetTickCount();
+
+    while (1) {
+        ESP_ERROR_CHECK(parking_lot_scan(&parking_lot));
+        vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(PARKING_SCAN_INTERVAL_MS));
+    }
+}
+
 void app_main(void) {
     printf("\n");
     printf("====================================\n");
@@ -43,12 +63,11 @@ void app_main(void) {
 
     ESP_LOGI(TAG, "Initialized %d parking slots", PARKING_SLOT_COUNT);
 
-    TickType_t last_wake_time = xTaskGetTickCount();
-
-    // Periodic scan loop with absolute scheduling (vTaskDelayUntil): the scan
-    // rate stays deterministic regardless of how long each scan takes.
-    while (1) {
-        ESP_ERROR_CHECK(parking_lot_scan(&parking_lot));
-        vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(PARKING_SCAN_INTERVAL_MS));
-    }
+    BaseType_t created = xTaskCreate(parking_task,
+        PARKING_TASK_NAME,
+        PARKING_TASK_STACK_SIZE,
+        NULL,
+        PARKING_TASK_PRIORITY,
+        NULL);
+    ESP_ERROR_CHECK(created == pdPASS ? ESP_OK : ESP_FAIL);
 }

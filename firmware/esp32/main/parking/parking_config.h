@@ -13,6 +13,15 @@
 /** Number of parking slots / ultrasonic sensors on this device. */
 #define PARKING_SLOT_COUNT 3
 
+/** Parking scan task: 4 KiB stack (scan + logs + filter state headroom). */
+#define PARKING_TASK_STACK_SIZE 4096
+
+/** Priority above idle/log workers, below critical system tasks. */
+#define PARKING_TASK_PRIORITY 5
+
+/** FreeRTOS name of the parking task (shown in traces / stack dumps). */
+#define PARKING_TASK_NAME "parking_task"
+
 /**
  * EMA smoothing factor for distance stability, in the range (0..1].
  *
