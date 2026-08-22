@@ -38,116 +38,116 @@ static const char* TAG = "ultrasonic";
 #define TRIG_IDLE_US 2
 
 esp_err_t ultrasonic_init(ultrasonic_sensor_t* sensor, const ultrasonic_config_t* config) {
-  if (sensor == NULL || config == NULL) {
-    return ESP_ERR_INVALID_ARG;
-  }
+    if (sensor == NULL || config == NULL) {
+        return ESP_ERR_INVALID_ARG;
+    }
 
-  // Validate GPIO wiring before touching hardware: both pins must exist on the
-  // target and must be distinct. Prevents out-of-range shifts on pin_bit_mask.
-  if (config->trig_gpio < 0 || config->trig_gpio >= GPIO_NUM_MAX || config->echo_gpio < 0 ||
-      config->echo_gpio >= GPIO_NUM_MAX || config->trig_gpio == config->echo_gpio) {
-    return ESP_ERR_INVALID_ARG;
-  }
+    // Validate GPIO wiring before touching hardware: both pins must exist on the
+    // target and must be distinct. Prevents out-of-range shifts on pin_bit_mask.
+    if (config->trig_gpio < 0 || config->trig_gpio >= GPIO_NUM_MAX || config->echo_gpio < 0 ||
+        config->echo_gpio >= GPIO_NUM_MAX || config->trig_gpio == config->echo_gpio) {
+        return ESP_ERR_INVALID_ARG;
+    }
 
-  sensor->config = *config;
+    sensor->config = *config;
 
-  gpio_config_t trig_config = {
-    .pin_bit_mask = 1ULL << config->trig_gpio,
-    .mode = GPIO_MODE_OUTPUT,
-    .pull_up_en = GPIO_PULLUP_DISABLE,
-    .pull_down_en = GPIO_PULLDOWN_DISABLE,
-    .intr_type = GPIO_INTR_DISABLE,
-  };
+    gpio_config_t trig_config = {
+        .pin_bit_mask = 1ULL << config->trig_gpio,
+        .mode = GPIO_MODE_OUTPUT,
+        .pull_up_en = GPIO_PULLUP_DISABLE,
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+        .intr_type = GPIO_INTR_DISABLE,
+    };
 
-  // A failing gpio_config is a configuration error, not a fatal one: propagate
-  // the error so the caller decides whether to retry or give up.
-  esp_err_t err = gpio_config(&trig_config);
-  if (err != ESP_OK) {
-    return err;
-  }
+    // A failing gpio_config is a configuration error, not a fatal one: propagate
+    // the error so the caller decides whether to retry or give up.
+    esp_err_t err = gpio_config(&trig_config);
+    if (err != ESP_OK) {
+        return err;
+    }
 
-  gpio_config_t echo_config = {
-    .pin_bit_mask = 1ULL << config->echo_gpio,
-    .mode = GPIO_MODE_INPUT,
-    .pull_up_en = GPIO_PULLUP_DISABLE,
-    .pull_down_en = GPIO_PULLDOWN_DISABLE,
-    .intr_type = GPIO_INTR_DISABLE,
-  };
+    gpio_config_t echo_config = {
+        .pin_bit_mask = 1ULL << config->echo_gpio,
+        .mode = GPIO_MODE_INPUT,
+        .pull_up_en = GPIO_PULLUP_DISABLE,
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+        .intr_type = GPIO_INTR_DISABLE,
+    };
 
-  err = gpio_config(&echo_config);
-  if (err != ESP_OK) {
-    return err;
-  }
+    err = gpio_config(&echo_config);
+    if (err != ESP_OK) {
+        return err;
+    }
 
-  // Hold TRIG low so a measurement is only started by an explicit pulse below.
-  err = gpio_set_level(config->trig_gpio, 0);
-  if (err != ESP_OK) {
-    return err;
-  }
+    // Hold TRIG low so a measurement is only started by an explicit pulse below.
+    err = gpio_set_level(config->trig_gpio, 0);
+    if (err != ESP_OK) {
+        return err;
+    }
 
-  ESP_LOGI(TAG, "Initialized TRIG=%d ECHO=%d", config->trig_gpio, config->echo_gpio);
+    ESP_LOGI(TAG, "Initialized TRIG=%d ECHO=%d", config->trig_gpio, config->echo_gpio);
 
-  return ESP_OK;
+    return ESP_OK;
 }
 
 esp_err_t ultrasonic_measure_cm(const ultrasonic_sensor_t* sensor, float* distance_cm) {
-  if (sensor == NULL || distance_cm == NULL) {
-    return ESP_ERR_INVALID_ARG;
-  }
-
-  const gpio_num_t trig = sensor->config.trig_gpio;
-  const gpio_num_t echo = sensor->config.echo_gpio;
-
-  // A 10 us HIGH pulse on TRIG starts one measurement cycle.
-  gpio_set_level(trig, 0);
-  esp_rom_delay_us(TRIG_IDLE_US);
-  gpio_set_level(trig, 1);
-  esp_rom_delay_us(TRIG_PULSE_US);
-  gpio_set_level(trig, 0);
-
-  // Wait for ECHO to go HIGH (measurement in progress).
-  int64_t timeout_start = esp_timer_get_time();
-
-  while (gpio_get_level(echo) == 0) {
-    if (esp_timer_get_time() - timeout_start >= ULTRASONIC_TIMEOUT_US) {
-      // No object within range, or the sensor is unresponsive.
-      return ESP_ERR_TIMEOUT;
+    if (sensor == NULL || distance_cm == NULL) {
+        return ESP_ERR_INVALID_ARG;
     }
-  }
 
-  int64_t pulse_start = esp_timer_get_time();
+    const gpio_num_t trig = sensor->config.trig_gpio;
+    const gpio_num_t echo = sensor->config.echo_gpio;
 
-  // Wait for ECHO to go LOW (measurement complete). Pulse width is the round trip.
-  while (gpio_get_level(echo) == 1) {
-    if (esp_timer_get_time() - pulse_start >= ULTRASONIC_TIMEOUT_US) {
-      return ESP_ERR_TIMEOUT;
+    // A 10 us HIGH pulse on TRIG starts one measurement cycle.
+    gpio_set_level(trig, 0);
+    esp_rom_delay_us(TRIG_IDLE_US);
+    gpio_set_level(trig, 1);
+    esp_rom_delay_us(TRIG_PULSE_US);
+    gpio_set_level(trig, 0);
+
+    // Wait for ECHO to go HIGH (measurement in progress).
+    int64_t timeout_start = esp_timer_get_time();
+
+    while (gpio_get_level(echo) == 0) {
+        if (esp_timer_get_time() - timeout_start >= ULTRASONIC_TIMEOUT_US) {
+            // No object within range, or the sensor is unresponsive.
+            return ESP_ERR_TIMEOUT;
+        }
     }
-  }
 
-  int64_t pulse_end = esp_timer_get_time();
+    int64_t pulse_start = esp_timer_get_time();
 
-  const int64_t pulse_duration_us = pulse_end - pulse_start;
+    // Wait for ECHO to go LOW (measurement complete). Pulse width is the round trip.
+    while (gpio_get_level(echo) == 1) {
+        if (esp_timer_get_time() - pulse_start >= ULTRASONIC_TIMEOUT_US) {
+            return ESP_ERR_TIMEOUT;
+        }
+    }
 
-  if (pulse_duration_us < 0) {
-    // Defensive: pulse_end must not precede pulse_start.
-    return ESP_ERR_INVALID_RESPONSE;
-  }
+    int64_t pulse_end = esp_timer_get_time();
 
-  // One-way distance = (round-trip time * sound speed) / 2.
-  const float distance = (pulse_duration_us * SOUND_SPEED_CM_PER_US) / 2.0f;
+    const int64_t pulse_duration_us = pulse_end - pulse_start;
 
-  // Reject implausible readings instead of propagating garbage upstream.
-  if (distance < ULTRASONIC_MIN_DISTANCE_CM) {
-    // Too close to be a real target: treat as a spurious echo.
-    return ESP_ERR_INVALID_RESPONSE;
-  }
+    if (pulse_duration_us < 0) {
+        // Defensive: pulse_end must not precede pulse_start.
+        return ESP_ERR_INVALID_RESPONSE;
+    }
 
-  if (distance > ULTRASONIC_MAX_DISTANCE_CM) {
-    // Beyond the usable range: treat like "no object in range".
-    return ESP_ERR_TIMEOUT;
-  }
+    // One-way distance = (round-trip time * sound speed) / 2.
+    const float distance = (pulse_duration_us * SOUND_SPEED_CM_PER_US) / 2.0f;
 
-  *distance_cm = distance;
+    // Reject implausible readings instead of propagating garbage upstream.
+    if (distance < ULTRASONIC_MIN_DISTANCE_CM) {
+        // Too close to be a real target: treat as a spurious echo.
+        return ESP_ERR_INVALID_RESPONSE;
+    }
 
-  return ESP_OK;
+    if (distance > ULTRASONIC_MAX_DISTANCE_CM) {
+        // Beyond the usable range: treat like "no object in range".
+        return ESP_ERR_TIMEOUT;
+    }
+
+    *distance_cm = distance;
+
+    return ESP_OK;
 }

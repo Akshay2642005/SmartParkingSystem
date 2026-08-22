@@ -25,29 +25,29 @@ static parking_lot_t parking_lot;
 
 /** Initialize every slot's sensor and register them with the lot. */
 static void initialize_slots(void) {
-  for (int i = 0; i < PARKING_SLOT_COUNT; i++) {
-    // Sensor init failure is a fatal configuration problem -> abort.
-    ESP_ERROR_CHECK(parking_slot_init(&slots[i], &slot_configs[i]));
-  }
+    for (int i = 0; i < PARKING_SLOT_COUNT; i++) {
+        // Sensor init failure is a fatal configuration problem -> abort.
+        ESP_ERROR_CHECK(parking_slot_init(&slots[i], &slot_configs[i]));
+    }
 
-  parking_lot_init(&parking_lot, slots, PARKING_SLOT_COUNT);
+    parking_lot_init(&parking_lot, slots, PARKING_SLOT_COUNT);
 }
 
 void app_main(void) {
-  printf("\n");
-  printf("====================================\n");
-  printf("      Smart Parking System\n");
-  printf("====================================\n");
+    printf("\n");
+    printf("====================================\n");
+    printf("      Smart Parking System\n");
+    printf("====================================\n");
 
-  initialize_slots();
+    initialize_slots();
 
-  ESP_LOGI(TAG, "Initialized %d parking slots", PARKING_SLOT_COUNT);
+    ESP_LOGI(TAG, "Initialized %d parking slots", PARKING_SLOT_COUNT);
 
-  // Periodic scan loop. The 1 s interval is scheduled for configuration
-  // (Phase 13); polling stays here until the dedicated task lands (Phase 14).
-  while (1) {
-    ESP_ERROR_CHECK(parking_lot_scan(&parking_lot));
+    // Periodic scan loop. The 1 s interval is scheduled for configuration
+    // (Phase 13); polling stays here until the dedicated task lands (Phase 14).
+    while (1) {
+        ESP_ERROR_CHECK(parking_lot_scan(&parking_lot));
 
-    vTaskDelay(pdMS_TO_TICKS(1000));
-  }
+        vTaskDelay(pdMS_TO_TICKS(1000));
+    }
 }

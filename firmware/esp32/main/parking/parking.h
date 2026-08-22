@@ -16,41 +16,41 @@
 
 /** Occupancy state of a single parking slot. */
 typedef enum {
-  PARKING_FREE,     /**< Slot is available. */
-  PARKING_OCCUPIED, /**< Slot is in use. */
-  PARKING_ERROR,    /**< Sensor measurement failed; state is unknown. */
+    PARKING_FREE,     /**< Slot is available. */
+    PARKING_OCCUPIED, /**< Slot is in use. */
+    PARKING_ERROR,    /**< Sensor measurement failed; state is unknown. */
 } parking_state_t;
 
 /** Events emitted when a slot changes occupancy state. */
 typedef enum {
-  PARKING_EVENT_NONE,          /**< No state change this update. */
-  PARKING_EVENT_SLOT_OCCUPIED, /**< Slot transitioned FREE -> OCCUPIED. */
-  PARKING_EVENT_SLOT_FREED,    /**< Slot transitioned OCCUPIED -> FREE. */
+    PARKING_EVENT_NONE,          /**< No state change this update. */
+    PARKING_EVENT_SLOT_OCCUPIED, /**< Slot transitioned FREE -> OCCUPIED. */
+    PARKING_EVENT_SLOT_FREED,    /**< Slot transitioned OCCUPIED -> FREE. */
 } parking_event_t;
 
 /** Per-slot configuration (see parking_config.c). */
 typedef struct {
-  uint8_t id;                  /**< Stable slot identifier. */
-  ultrasonic_config_t sensor;  /**< GPIO wiring for this slot's sensor. */
-  float occupied_threshold_cm; /**< Distance <= this => OCCUPIED. */
-  float free_threshold_cm;     /**< Distance >= this => FREE. */
+    uint8_t id;                  /**< Stable slot identifier. */
+    ultrasonic_config_t sensor;  /**< GPIO wiring for this slot's sensor. */
+    float occupied_threshold_cm; /**< Distance <= this => OCCUPIED. */
+    float free_threshold_cm;     /**< Distance >= this => FREE. */
 } parking_slot_config_t;
 
 /** Runtime state of a single parking slot. */
 typedef struct {
-  parking_slot_config_t config;       /**< Slot configuration (copied at init). */
-  ultrasonic_sensor_t sensor;         /**< Sensor instance, initialized at slot init. */
-  parking_state_t state;              /**< Current occupancy state. */
-  parking_state_t state_before_error; /**< Stable state to restore after ERROR recovery. */
-  float distance_cm;                  /**< Latest measured distance. */
+    parking_slot_config_t config;       /**< Slot configuration (copied at init). */
+    ultrasonic_sensor_t sensor;         /**< Sensor instance, initialized at slot init. */
+    parking_state_t state;              /**< Current occupancy state. */
+    parking_state_t state_before_error; /**< Stable state to restore after ERROR recovery. */
+    float distance_cm;                  /**< Latest measured distance. */
 } parking_slot_t;
 
 /** Aggregate view over all slots in the lot. */
 typedef struct {
-  parking_slot_t* slots;  /**< Pointer to the statically allocated slot array. */
-  size_t slot_count;      /**< Number of slots in the array. */
-  size_t occupied_count;  /**< Slots currently OCCUPIED. */
-  size_t available_count; /**< Slots currently FREE. */
+    parking_slot_t* slots;  /**< Pointer to the statically allocated slot array. */
+    size_t slot_count;      /**< Number of slots in the array. */
+    size_t occupied_count;  /**< Slots currently OCCUPIED. */
+    size_t available_count; /**< Slots currently FREE. */
 } parking_lot_t;
 
 /**

@@ -1,15 +1,15 @@
 BasedOnStyle: LLVM
 
-IndentWidth: 2
-TabWidth: 2
+IndentWidth: 4
+TabWidth: 4
 UseTab: Never
 
 IndentCaseLabels: true
 
-ColumnLimit: 100
+ColumnLimit: 0
 
 AlignAfterOpenBracket: DontAlign
-ContinuationIndentWidth: 2
+ContinuationIndentWidth: 4
 
 BinPackParameters: false
 BinPackArguments: false
@@ -23,5 +23,5 @@ BreakBeforeBraces: Attach
 
 SpaceBeforeAssignmentOperators: true
 
-AccessModifierOffset: -2
+AccessModifierOffset: -4
 NamespaceIndentation: None

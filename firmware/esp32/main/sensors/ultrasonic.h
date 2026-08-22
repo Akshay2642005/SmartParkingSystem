@@ -24,13 +24,13 @@
 
 /** GPIO pins driving a single HC-SR04 sensor. */
 typedef struct {
-  gpio_num_t trig_gpio; /**< GPIO driving the TRIG input (pulse to start a measurement). */
-  gpio_num_t echo_gpio; /**< GPIO reading the ECHO output (pulse width = distance). */
+    gpio_num_t trig_gpio; /**< GPIO driving the TRIG input (pulse to start a measurement). */
+    gpio_num_t echo_gpio; /**< GPIO reading the ECHO output (pulse width = distance). */
 } ultrasonic_config_t;
 
 /** Per-sensor instance state. Owns the pins this sensor is wired to. */
 typedef struct {
-  ultrasonic_config_t config;
+    ultrasonic_config_t config;
 } ultrasonic_sensor_t;
 
 /**
