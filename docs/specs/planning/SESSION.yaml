@@ -41,11 +41,13 @@ session:
       failures surface as recoverable ESP_ERR_INVALID_STATE)
     - Phase 16 — Logging convention (level table documented in
       firmware-architecture § Logging; WARN on ERROR recovery)
+    - Phase 17 — Configuration cleanup (parking_settings.h separates hardware
+      vs algorithm knobs, single definition site per constant)
   in_progress:
     - M2 — Sensor Layer hardening (Local Embedded Logic Improvements)
     - Firmware code documentation and spec synchronization
   next:
-    - Phase 17 — Configuration cleanup
+    - Phase 18 — Static memory review
     - Verify sensor integration in Wokwi
     - Decide device communication protocol (ADR-0005)
     - Begin M3 — Device Platform

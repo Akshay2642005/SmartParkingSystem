@@ -195,8 +195,16 @@ defaults are fine until networking changes the output budget.
 
 ### Configuration
 
-- Per-slot: `id`, `trig_gpio`, `echo_gpio`, `occupied_threshold_cm`,
-  `free_threshold_cm`.
+Three-file map — every knob has exactly one definition site:
+
+| File | Owns |
+| ---- | ---- |
+| `parking/parking_config.h/.c` | hardware + per-slot wiring: slot count, `id`, `trig_gpio`, `echo_gpio`, `occupied_threshold_cm` (30 cm), `free_threshold_cm` (35 cm). Thresholds stay here because they depend on sensor mounting height. |
+| `parking/parking_settings.h` | algorithm/system defaults (header-only): scan interval, EMA alpha, confirmation counts, task stack/priority/name. |
+| `sensors/ultrasonic.h` | driver-owned measurement limits: 2–400 cm range (+ near-floor tolerance), 30 ms timeout. |
+
+No Kconfig/menuconfig integration and no per-slot settings overrides — both
+deliberately deferred until a real need appears.
 
 ### Networking
 

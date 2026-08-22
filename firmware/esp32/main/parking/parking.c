@@ -4,6 +4,7 @@
 
 #include "esp_log.h"
 #include "parking_config.h"
+#include "parking_settings.h"
 
 /**
  * Parking domain implementation.

@@ -47,6 +47,8 @@ completed:
     failures now surface as recoverable ESP_ERR_INVALID_STATE)
   - Phase 16 — Logging convention (level table documented; WARN on ERROR
     recovery, silent band-restores stay silent)
+  - Phase 17 — Configuration cleanup (parking_settings.h separates hardware
+    algorithm knobs, single definition site per constant)
 
 in_progress:
   - M2 — Sensor Layer hardening (Local Embedded Logic Improvements)

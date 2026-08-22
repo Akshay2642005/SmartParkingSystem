@@ -8,6 +8,7 @@
 
 #include "parking.h"
 #include "parking_config.h"
+#include "parking_settings.h"
 
 /**
  * Application entry point — orchestration only.
