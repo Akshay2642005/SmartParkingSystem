@@ -26,16 +26,6 @@ static const char* TAG = "ultrasonic";
 /** Minimum measurable distance in cm (HC-SR04 datasheet). */
 #define ULTRASONIC_MIN_DISTANCE_CM 2.0f
 
-/**
- * Tolerance applied to the minimum-distance cutoff, in cm.
- *
- * The round trip at the datasheet floor is only ~116 us, so microsecond
- * quantization of the ECHO pulse and edge-detection jitter can shave a
- * legitimate near-floor reading just below ULTRASONIC_MIN_DISTANCE_CM.
- * Readings within this tolerance are kept; anything shorter is a spurious echo.
- */
-#define ULTRASONIC_MIN_TOLERANCE_CM 0.5f
-
 /** Maximum usable distance in cm (HC-SR04 datasheet). */
 #define ULTRASONIC_MAX_DISTANCE_CM 400.0f
 

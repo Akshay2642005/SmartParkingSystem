@@ -1,9 +1,43 @@
 # Test Plan
 
-Status: **Planned** (testing strategy; most tests are not yet implemented)
+Status: **Active** (host unit tests + Wokwi simulation executed; backend and
+end-to-end layers pending)
 
 This document describes the layered testing strategy for the Smart Parking
 System.
+
+## Host Unit Tests
+
+Pure parking-domain logic (state machine, thresholds, debouncing, recovery,
+statistics) is tested on the host — no ESP32, no IDF toolchain, no QEMU
+(`docs/impl` Phase 20). CMake builds five `unit/*` executables whose cases
+stream Redis-style `[ok]: name (N ms)` lines:
+
+```sh
+make -C firmware/esp32 test   # cmake build + direct execution (Redis-style output)
+ctest                         # same binaries via CTest, e.g. for CI (build dir)
+```
+
+- **Scope**: `main/parking/parking.c` + real production config
+  (`parking_config.c`) compiled against stubs of `esp_err.h`, `esp_log.h`,
+  `driver/gpio.h`, and a scriptable ultrasonic stand-in. The debug injection
+  hook compiles out (`CONFIG_PARKING_DEBUG_INJECT` undefined).
+- **Units**:
+  - `unit/classification` — threshold boundaries 30/35, band semantics
+    (29/34/36), hysteresis holds.
+  - `unit/debounce` — confirmation sequences `[25,25]`, `[25,40,25,25]`,
+    `[40,33,36]`, `[28,28,45,45]`, flip-flop noise.
+  - `unit/errors` — NaN/-5/0/450 rejection via the scan path, failing sensor
+    does not abort the scan, mark_error idempotency, invariant
+    `total = occupied + available + error`.
+  - `unit/recovery` — pre-error restore (silent vs event), immediate
+    non-debounced recovery, resumed debounce after recovery.
+  - `unit/statistics` — mixed-state counters, NULL conventions, state names.
+- **Sync hazard**: `stubs/ultrasonic_stub.c` mirrors the driver's plausibility
+  policy; `ULTRASONIC_MIN_TOLERANCE_CM` lives in `ultrasonic.h` so both share
+  one constant. Keep the stub in sync when touching the driver.
+- **Responsibility split**: host tests cover decision logic; Wokwi scenarios
+  cover timing, GPIO wiring, and the serial pipeline end-to-end.
 
 ## Firmware
 

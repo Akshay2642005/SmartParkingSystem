@@ -54,10 +54,13 @@ completed:
   - Phase 19 — Wokwi simulation improvements (wiring audit vs slot_configs,
     PARKING_DEBUG_INJECT serial hook, headless occupancy/error matrix
     scenario; verification record verifications/sensor-integration.md PASS)
+  - Phase 20 — Automated local testing (host unit tests built with CMake and
+    run by CTest - unit/classification, unit/debounce, unit/errors,
+    unit/recovery, unit/statistics; 27 cases passing; make -C firmware/esp32
+    test)
 
 in_progress:
-  - M2 — Sensor Layer hardening (Local Embedded Logic Improvements)
-  - Phase 20 — Automated local testing (host unit tests for parking logic)
+  - M2 close-out (completion-criteria audit into SESSION.yaml)
 
 planned:
   - Device communication protocol (ADR-0005)

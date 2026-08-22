@@ -30,6 +30,17 @@
 #define ULTRASONIC_MAX_DISTANCE_CM 400.0f
 
 /**
+ * Tolerance applied to the minimum-distance cutoff, in cm.
+ *
+ * The round trip at the datasheet floor is only ~116 us, so microsecond
+ * quantization of the ECHO pulse and edge-detection jitter can shave a
+ * legitimate near-floor reading just below ULTRASONIC_MIN_DISTANCE_CM.
+ * Readings within this tolerance are kept; anything shorter is a spurious echo.
+ * Lives in the header so host tests share this exact constant.
+ */
+#define ULTRASONIC_MIN_TOLERANCE_CM 0.5f
+
+/**
  * Check whether a distance reading is physically plausible for this sensor.
  *
  * Single source of truth for measurement plausibility, shared by the driver

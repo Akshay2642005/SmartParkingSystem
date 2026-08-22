@@ -42,3 +42,6 @@ are documented under [docs/specs/](docs/specs/README.md).
 Firmware development uses ESP-IDF and Wokwi (see
 [firmware/esp32/README.md](firmware/esp32/README.md)). Backend and dashboard
 details will be added as those milestones begin.
+
+Host unit tests for the parking logic (no hardware or IDF toolchain needed):
+`make -C firmware/esp32 test` — builds with CMake and runs the `unit/*` suite.
