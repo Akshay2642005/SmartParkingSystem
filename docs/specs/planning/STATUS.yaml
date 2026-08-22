@@ -31,6 +31,10 @@ completed:
     + error invariant)
   - Phase 9 — Lot query API audit (four const-correct getters, query block
     documented)
+  - Phase 10 — Slot query API (const read accessors for slot state and
+    distance)
+  - Phase 11 — Measurement stability (per-slot EMA filter, seeded on first
+    valid reading; invalid readings bypass the filter)
 
 in_progress:
   - M2 — Sensor Layer hardening (Local Embedded Logic Improvements)

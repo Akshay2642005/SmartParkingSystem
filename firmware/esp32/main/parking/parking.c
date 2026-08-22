@@ -4,6 +4,7 @@
 #include <stdbool.h>
 
 #include "esp_log.h"
+#include "parking_config.h"
 
 /**
  * Parking domain implementation.
@@ -34,6 +35,30 @@ static bool parking_measurement_is_valid(float distance_cm) {
     }
 
     return distance_cm >= ULTRASONIC_MIN_DISTANCE_CM && distance_cm <= ULTRASONIC_MAX_DISTANCE_CM;
+}
+
+/**
+ * Feed a validated raw distance through the per-slot EMA filter.
+ *
+ * The first valid reading seeds the filter directly (no ramp-up from zero).
+ * Invalid readings never reach this function, so filter state cannot be
+ * corrupted by sensor failures; ERROR periods deliberately do not reset the
+ * filter — the last smoothed value is the best available prior on recovery.
+ *
+ * Spec: docs/specs/architecture/firmware-architecture.md (measurement
+ * pipeline), docs/specs/decisions/ADR-0004-sensor-selection.md.
+ */
+static float parking_filter_distance(parking_slot_t* slot, float raw_cm) {
+    if (!slot->filter_seeded) {
+        slot->filter_seeded = true;
+        slot->filtered_distance_cm = raw_cm;
+        return raw_cm;
+    }
+
+    slot->filtered_distance_cm =
+        PARKING_FILTER_ALPHA * raw_cm + (1.0f - PARKING_FILTER_ALPHA) * slot->filtered_distance_cm;
+
+    return slot->filtered_distance_cm;
 }
 
 /**
@@ -82,6 +107,8 @@ esp_err_t parking_slot_init(parking_slot_t* slot, const parking_slot_config_t* c
     slot->state = PARKING_FREE;
     slot->state_before_error = PARKING_FREE;
     slot->distance_cm = 0.0f;
+    slot->filtered_distance_cm = 0.0f;
+    slot->filter_seeded = false;
 
     // Initialize the slot's sensor; failure here is a fatal configuration error.
     return ultrasonic_init(&slot->sensor, &slot->config.sensor);
@@ -237,14 +264,17 @@ esp_err_t parking_lot_scan(parking_lot_t* lot) {
             continue;
         }
 
-        parking_event_t event = parking_slot_update(slot, distance_cm);
+        const float stable_cm = parking_filter_distance(slot, distance_cm);
+
+        parking_event_t event = parking_slot_update(slot, stable_cm);
         handle_parking_event(&event);
 
         // Event-based INFO logging; detailed readings stay at DEBUG level.
         ESP_LOGD(TAG,
-            "Slot %d | Distance: %.2f cm | State: %s",
+            "Slot %d | Raw: %.2f cm | Stable: %.2f cm | State: %s",
             slot->config.id,
-            slot->distance_cm,
+            distance_cm,
+            slot->filtered_distance_cm,
             parking_state_to_string(slot->state));
     }
 
@@ -290,4 +320,20 @@ size_t parking_lot_get_error(const parking_lot_t* lot) {
     }
 
     return lot->error_count;
+}
+
+parking_state_t parking_slot_get_state(const parking_slot_t* slot) {
+    if (slot == NULL) {
+        return PARKING_ERROR;
+    }
+
+    return slot->state;
+}
+
+float parking_slot_get_distance_cm(const parking_slot_t* slot) {
+    if (slot == NULL) {
+        return 0.0f;
+    }
+
+    return slot->filtered_distance_cm;
 }

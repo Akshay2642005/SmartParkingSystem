@@ -27,7 +27,9 @@ A slot is considered **occupied** when the measured distance is at or below
 `occupied_threshold_cm` (30 cm) and **free** when at or above `free_threshold_cm`
 (35 cm). Hysteresis between the two thresholds prevents state flapping on
 noise. The driver converts the ECHO round-trip time to a one-way distance using
-a constant sound speed (0.0343 cm/µs).
+a constant sound speed (0.0343 cm/µs). Occupancy decisions consume an
+EMA-smoothed distance (per-slot filter, `PARKING_FILTER_ALPHA`), so threshold
+comparisons act on stable readings rather than raw jitter.
 
 ## Driver Limits and Error Semantics
 

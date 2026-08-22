@@ -42,10 +42,12 @@ ESP-IDF / FreeRTOS
 
 ### Parking Lot Scan
 
-- `parking_lot_scan()` in `parking/parking.c` owns the full scan cycle:
-  iterating slots, measuring each ultrasonic sensor, handling measurement
-  failures (slot → `ERROR`, scan continues), updating slot state, processing
-  state-change events, and refreshing lot statistics.
+- `parking_lot_scan()` in `parking/parking.c` owns the full scan cycle per
+  slot: measure the ultrasonic sensor, validate the reading (invalid →
+  `ERROR`, scan continues), smooth it through a per-slot EMA filter
+  (`PARKING_FILTER_ALPHA`, seeded by the first valid reading), feed the stable
+  distance to the state machine, process state-change events, and finally
+  refresh lot statistics.
 
 ### Tasks & Scheduling
 
@@ -94,7 +96,9 @@ ESP-IDF / FreeRTOS
 - Invariant: `total = occupied + available + error`. ERROR slots are not
   bookable and are excluded from `available_count`.
 - Query API: `parking_lot_get_total/_occupied/_available/_error` (all
-  const-correct).
+  const-correct), plus slot read accessors `parking_slot_get_state` and
+  `parking_slot_get_distance_cm` (latest EMA-filtered distance) as the
+  supported read path for telemetry/tests.
 
 ### Slot Configuration
 

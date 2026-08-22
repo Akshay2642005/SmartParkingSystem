@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -54,7 +55,9 @@ typedef struct {
     ultrasonic_sensor_t sensor;         /**< Sensor instance, initialized at slot init. */
     parking_state_t state;              /**< Current occupancy state. */
     parking_state_t state_before_error; /**< Stable state to restore after ERROR recovery. */
-    float distance_cm;                  /**< Latest measured distance. */
+    float distance_cm;                  /**< Latest raw measured distance. */
+    float filtered_distance_cm;         /**< EMA-smoothed distance driving decisions. */
+    bool filter_seeded;                 /**< True after the first valid measurement seeded the filter. */
 } parking_slot_t;
 
 /** Aggregate view over all slots in the lot. */
@@ -92,7 +95,7 @@ esp_err_t parking_slot_init(parking_slot_t* slot, const parking_slot_config_t* c
  * Hysteresis between the two thresholds prevents flapping on noise.
  *
  * @param slot        Slot to update.
- * @param distance_cm Validated distance in centimeters (see
+ * @param distance_cm Validated, EMA-filtered distance in centimeters (see
  *                    parking_measurement_is_valid); callers must not pass
  *                    unvalidated sensor output.
  *
@@ -159,6 +162,21 @@ size_t parking_lot_get_available(const parking_lot_t* lot);
 
 /** @return Number of slots currently in ERROR state. */
 size_t parking_lot_get_error(const parking_lot_t* lot);
+
+/**
+ * Supported read path for out-of-module consumers (telemetry, tests): keeps
+ * struct layout free to evolve.
+ *
+ * @return Current occupancy state of a slot, or PARKING_ERROR if @p slot is
+ *         NULL (safe-for-telemetry convention: unknown reads as ERROR).
+ */
+parking_state_t parking_slot_get_state(const parking_slot_t* slot);
+
+/**
+ * @return Latest measured distance in centimeters for a slot (EMA-filtered),
+ *         or 0.0f if never measured or @p slot is NULL.
+ */
+float parking_slot_get_distance_cm(const parking_slot_t* slot);
 
 /** @return Human-readable name for a parking state. */
 const char* parking_state_to_string(parking_state_t state);

@@ -13,5 +13,14 @@
 /** Number of parking slots / ultrasonic sensors on this device. */
 #define PARKING_SLOT_COUNT 3
 
+/**
+ * EMA smoothing factor for distance stability, in the range (0..1].
+ *
+ * Higher values react faster to real changes; lower values smooth more.
+ * With a 1 s scan period, 0.3 settles ~90 % within about six scans — fast
+ * enough for a car parking, slow enough to swallow echo jitter.
+ */
+#define PARKING_FILTER_ALPHA 0.3f
+
 /** Slot table defined in parking_config.c. */
 extern const parking_slot_config_t slot_configs[PARKING_SLOT_COUNT];

@@ -24,11 +24,15 @@ session:
       + error invariant)
     - Phase 9 — Lot query API audit (four const-correct getters, query block
       documented)
+    - Phase 10 — Slot query API (const read accessors for slot state and
+      distance)
+    - Phase 11 — Measurement stability (per-slot EMA filter, seeded on first
+      valid reading; invalid readings bypass the filter)
   in_progress:
     - M2 — Sensor Layer hardening (Local Embedded Logic Improvements)
     - Firmware code documentation and spec synchronization
   next:
-    - Phase 10 — Slot Query API
+    - Phase 12 — Occupancy Debouncing
     - Verify sensor integration in Wokwi
     - Decide device communication protocol (ADR-0005)
     - Begin M3 — Device Platform
