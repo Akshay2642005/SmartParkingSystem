@@ -22,6 +22,20 @@
 /** Maximum usable distance in centimeters. */
 #define ULTRASONIC_MAX_DISTANCE_CM 400.0f
 
+/**
+ * Check whether a distance reading is physically plausible for this sensor.
+ *
+ * Single source of truth for measurement plausibility, shared by the driver
+ * and by the parking layer's defense-in-depth validation. Accepts finite,
+ * positive readings within [ULTRASONIC_MIN_DISTANCE_CM - tolerance,
+ * ULTRASONIC_MAX_DISTANCE_CM]; the tolerance below the datasheet floor
+ * absorbs microsecond timing quantization and edge-detection jitter.
+ *
+ * @param distance_cm Reading to check.
+ * @return true if the reading is usable, false if it is garbage or out of range.
+ */
+bool ultrasonic_distance_is_plausible(float distance_cm);
+
 /** GPIO pins driving a single HC-SR04 sensor. */
 typedef struct {
     gpio_num_t trig_gpio; /**< GPIO driving the TRIG input (pulse to start a measurement). */
@@ -60,6 +74,8 @@ esp_err_t ultrasonic_init(ultrasonic_sensor_t* sensor, const ultrasonic_config_t
  *         ESP_ERR_TIMEOUT if no ECHO pulse arrives within the timeout window or
  *                        the distance exceeds ULTRASONIC_MAX_DISTANCE_CM,
  *         ESP_ERR_INVALID_RESPONSE if the reading is implausible
- *                        (below ULTRASONIC_MIN_DISTANCE_CM or inconsistent).
+ *                        (clearly below ULTRASONIC_MIN_DISTANCE_CM — a small
+ *                        tolerance around the floor absorbs timing jitter —
+ *                        or inconsistent).
  */
 esp_err_t ultrasonic_measure_cm(const ultrasonic_sensor_t* sensor, float* distance_cm);

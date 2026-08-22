@@ -41,6 +41,8 @@ completed:
     vTaskDelayUntil absolute scheduling)
   - Phase 14 — Separate parking task (dedicated xTaskCreate'd scan task with
     named stack size / priority constants; app_main returns after setup)
+  - Near-floor tolerance fix (ultrasonic_distance_is_plausible shared by
+    driver and parking validator; absorbs us-timing jitter at the 2 cm floor)
 
 in_progress:
   - M2 — Sensor Layer hardening (Local Embedded Logic Improvements)

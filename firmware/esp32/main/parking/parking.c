@@ -1,6 +1,5 @@
 #include "parking.h"
 
-#include <math.h>
 #include <stdbool.h>
 
 #include "esp_log.h"
@@ -26,15 +25,9 @@ static const char* TAG = "parking";
  *       docs/specs/decisions/ADR-0004-sensor-selection.md (driver limits).
  */
 static bool parking_measurement_is_valid(float distance_cm) {
-    if (!isfinite(distance_cm)) {
-        return false;
-    }
-
-    if (distance_cm <= 0.0f) {
-        return false;
-    }
-
-    return distance_cm >= ULTRASONIC_MIN_DISTANCE_CM && distance_cm <= ULTRASONIC_MAX_DISTANCE_CM;
+    // Plausibility policy (finite, positive, within sensor range incl. the
+    // jitter tolerance below the datasheet floor) lives in the sensor layer.
+    return ultrasonic_distance_is_plausible(distance_cm);
 }
 
 /**

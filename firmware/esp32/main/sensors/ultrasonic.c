@@ -1,5 +1,7 @@
 #include "ultrasonic.h"
 
+#include <math.h>
+
 #include "esp_log.h"
 #include "esp_rom_sys.h"
 #include "esp_timer.h"
@@ -21,6 +23,16 @@ static const char* TAG = "ultrasonic";
 
 /** Minimum measurable distance in cm (HC-SR04 datasheet). */
 #define ULTRASONIC_MIN_DISTANCE_CM 2.0f
+
+/**
+ * Tolerance applied to the minimum-distance cutoff, in cm.
+ *
+ * The round trip at the datasheet floor is only ~116 us, so microsecond
+ * quantization of the ECHO pulse and edge-detection jitter can shave a
+ * legitimate near-floor reading just below ULTRASONIC_MIN_DISTANCE_CM.
+ * Readings within this tolerance are kept; anything shorter is a spurious echo.
+ */
+#define ULTRASONIC_MIN_TOLERANCE_CM 0.5f
 
 /** Maximum usable distance in cm (HC-SR04 datasheet). */
 #define ULTRASONIC_MAX_DISTANCE_CM 400.0f
@@ -90,6 +102,15 @@ esp_err_t ultrasonic_init(ultrasonic_sensor_t* sensor, const ultrasonic_config_t
     return ESP_OK;
 }
 
+bool ultrasonic_distance_is_plausible(float distance_cm) {
+    if (!isfinite(distance_cm) || distance_cm <= 0.0f) {
+        return false;
+    }
+
+    return distance_cm >= ULTRASONIC_MIN_DISTANCE_CM - ULTRASONIC_MIN_TOLERANCE_CM &&
+           distance_cm <= ULTRASONIC_MAX_DISTANCE_CM;
+}
+
 esp_err_t ultrasonic_measure_cm(const ultrasonic_sensor_t* sensor, float* distance_cm) {
     if (sensor == NULL || distance_cm == NULL) {
         return ESP_ERR_INVALID_ARG;
@@ -137,14 +158,14 @@ esp_err_t ultrasonic_measure_cm(const ultrasonic_sensor_t* sensor, float* distan
     const float distance = (pulse_duration_us * SOUND_SPEED_CM_PER_US) / 2.0f;
 
     // Reject implausible readings instead of propagating garbage upstream.
-    if (distance < ULTRASONIC_MIN_DISTANCE_CM) {
+    if (!ultrasonic_distance_is_plausible(distance)) {
+        if (distance > ULTRASONIC_MAX_DISTANCE_CM) {
+            // Beyond the usable range: treat like "no object in range".
+            return ESP_ERR_TIMEOUT;
+        }
+
         // Too close to be a real target: treat as a spurious echo.
         return ESP_ERR_INVALID_RESPONSE;
-    }
-
-    if (distance > ULTRASONIC_MAX_DISTANCE_CM) {
-        // Beyond the usable range: treat like "no object in range".
-        return ESP_ERR_TIMEOUT;
     }
 
     *distance_cm = distance;

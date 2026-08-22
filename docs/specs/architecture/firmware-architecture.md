@@ -117,13 +117,19 @@ ESP-IDF / FreeRTOS
 ### Error Handling
 
 - Measurement validation gates every reading before `parking_slot_update`;
-  invalid readings (non-numeric, zero/negative, outside 2–400 cm) mark the slot
-  `ERROR` and never become FREE or OCCUPIED.
+  invalid readings (non-numeric, zero/negative, outside the plausible band)
+  mark the slot `ERROR` and never become FREE or OCCUPIED. Plausibility has a
+  single source of truth: `ultrasonic_distance_is_plausible()` in the sensor
+  layer, shared by driver and parking layer. The band accepts a small
+  tolerance below the datasheet floor (readings ≥ ~1.5 cm): at 2 cm the echo
+  round trip is only ~116 µs, so microsecond quantization and edge-detection
+  jitter would otherwise flip legitimate near-floor readings to errors.
 - Measurement failures call `parking_slot_mark_error` (`FR-012`); the scan
   continues with the other slots.
 - The ultrasonic driver validates arguments, GPIO wiring, and measurement
-  range (2–400 cm), returning `ESP_ERR_TIMEOUT` / `ESP_ERR_INVALID_RESPONSE` /
-  `ESP_ERR_INVALID_ARG` rather than crashing.
+  plausibility (2–400 cm with the near-floor tolerance), returning
+  `ESP_ERR_TIMEOUT` / `ESP_ERR_INVALID_RESPONSE` / `ESP_ERR_INVALID_ARG`
+  rather than crashing.
 - Sensor init failure is treated as a fatal configuration error
   (`ESP_ERROR_CHECK`).
 
