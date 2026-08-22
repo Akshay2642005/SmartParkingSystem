@@ -37,6 +37,8 @@ completed:
     valid reading; invalid readings bypass the filter)
   - Phase 12 — Occupancy debouncing (configurable N-consecutive confirmation,
     band readings reset counters, recovery stays immediate)
+  - Phase 13 — Sensor polling timing (PARKING_SCAN_INTERVAL_MS constant,
+    vTaskDelayUntil absolute scheduling)
 
 in_progress:
   - M2 — Sensor Layer hardening (Local Embedded Logic Improvements)

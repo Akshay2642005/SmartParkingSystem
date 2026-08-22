@@ -30,11 +30,13 @@ session:
       valid reading; invalid readings bypass the filter)
     - Phase 12 — Occupancy debouncing (configurable N-consecutive confirmation,
       band readings reset counters, recovery stays immediate)
+    - Phase 13 — Sensor polling timing (PARKING_SCAN_INTERVAL_MS constant,
+      vTaskDelayUntil absolute scheduling)
   in_progress:
     - M2 — Sensor Layer hardening (Local Embedded Logic Improvements)
     - Firmware code documentation and spec synchronization
   next:
-    - Phase 13 — Sensor Polling Timing
+    - Phase 14 — Separate Parking Task
     - Verify sensor integration in Wokwi
     - Decide device communication protocol (ADR-0005)
     - Begin M3 — Device Platform

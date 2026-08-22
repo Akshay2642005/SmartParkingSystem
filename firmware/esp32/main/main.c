@@ -43,11 +43,12 @@ void app_main(void) {
 
     ESP_LOGI(TAG, "Initialized %d parking slots", PARKING_SLOT_COUNT);
 
-    // Periodic scan loop. The 1 s interval becomes a named configuration
-    // constant later; polling stays here until the dedicated parking task lands.
+    TickType_t last_wake_time = xTaskGetTickCount();
+
+    // Periodic scan loop with absolute scheduling (vTaskDelayUntil): the scan
+    // rate stays deterministic regardless of how long each scan takes.
     while (1) {
         ESP_ERROR_CHECK(parking_lot_scan(&parking_lot));
-
-        vTaskDelay(pdMS_TO_TICKS(1000));
+        vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(PARKING_SCAN_INTERVAL_MS));
     }
 }

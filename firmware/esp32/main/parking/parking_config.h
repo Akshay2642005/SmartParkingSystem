@@ -30,5 +30,8 @@
 #define PARKING_OCCUPIED_CONFIRMATION_COUNT 2
 #define PARKING_FREE_CONFIRMATION_COUNT 2
 
+/** Period between parking lot scans in milliseconds. */
+#define PARKING_SCAN_INTERVAL_MS 1000
+
 /** Slot table defined in parking_config.c. */
 extern const parking_slot_config_t slot_configs[PARKING_SLOT_COUNT];

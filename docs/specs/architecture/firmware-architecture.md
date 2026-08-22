@@ -52,9 +52,12 @@ ESP-IDF / FreeRTOS
 
 ### Tasks & Scheduling
 
-- A single task runs `app_main`'s loop with a 1 s delay between cycles.
-- A dedicated parking task and configurable scan interval are planned
-  (Phases 13–14).
+- A single task runs `app_main`'s loop, scheduled with `vTaskDelayUntil`
+  against `PARKING_SCAN_INTERVAL_MS` (1 s): absolute-period scheduling keeps
+  the scan rate deterministic regardless of scan duration (worst case ≈ 90 ms
+  for three slots at full timeout vs. the 1000 ms period).
+- A dedicated parking task is planned
+  (Phase 14).
 
 ### Parking State Machine
 
