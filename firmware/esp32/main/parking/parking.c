@@ -49,6 +49,30 @@ static parking_event_t make_parking_event(parking_event_type_t type, const parki
     return event;
 }
 
+/**
+ * Handle one parking event.
+ *
+ * Single seam between the state machine and its consumers: logging today;
+ * later consumers (event queue, networking) attach here, never inside
+ * parking_slot_update().
+ *
+ * Spec: docs/specs/architecture/firmware-architecture.md (Events).
+ */
+static void handle_parking_event(const parking_event_t* event) {
+    switch (event->type) {
+        case PARKING_EVENT_SLOT_OCCUPIED:
+            ESP_LOGI(TAG, "Slot %d became OCCUPIED", event->slot_id);
+            break;
+
+        case PARKING_EVENT_SLOT_FREED:
+            ESP_LOGI(TAG, "Slot %d became FREE", event->slot_id);
+            break;
+
+        case PARKING_EVENT_NONE:
+            break;
+    }
+}
+
 esp_err_t parking_slot_init(parking_slot_t* slot, const parking_slot_config_t* config) {
     if (slot == NULL || config == NULL) {
         return ESP_ERR_INVALID_ARG;
@@ -154,6 +178,7 @@ void parking_lot_init(parking_lot_t* lot, parking_slot_t* slots, size_t slot_cou
     lot->slots = slots;
     lot->slot_count = slot_count;
     lot->occupied_count = 0;
+    lot->error_count = 0;
     lot->available_count = slot_count;
 
     // Counts are recomputed from the (already initialized) slot states.
@@ -166,14 +191,25 @@ void parking_lot_update_counts(parking_lot_t* lot) {
     }
 
     lot->occupied_count = 0;
-
+    lot->error_count = 0;
     for (size_t i = 0; i < lot->slot_count; i++) {
-        if (lot->slots[i].state == PARKING_OCCUPIED) {
-            lot->occupied_count++;
+        switch (lot->slots[i].state) {
+            case PARKING_OCCUPIED:
+                lot->occupied_count++;
+                break;
+
+            case PARKING_ERROR:
+                lot->error_count++;
+                break;
+
+            case PARKING_FREE:
+                break;
         }
     }
 
-    lot->available_count = lot->slot_count - lot->occupied_count;
+    // Invariant: total = occupied + available + error. ERROR slots are not
+    // bookable, so they must never appear as available.
+    lot->available_count = lot->slot_count - lot->occupied_count - lot->error_count;
 }
 
 esp_err_t parking_lot_scan(parking_lot_t* lot) {
@@ -202,21 +238,9 @@ esp_err_t parking_lot_scan(parking_lot_t* lot) {
         }
 
         parking_event_t event = parking_slot_update(slot, distance_cm);
+        handle_parking_event(&event);
 
         // Event-based INFO logging; detailed readings stay at DEBUG level.
-        switch (event.type) {
-            case PARKING_EVENT_SLOT_OCCUPIED:
-                ESP_LOGI(TAG, "Slot %d became OCCUPIED", slot->config.id);
-                break;
-
-            case PARKING_EVENT_SLOT_FREED:
-                ESP_LOGI(TAG, "Slot %d became FREE", slot->config.id);
-                break;
-
-            case PARKING_EVENT_NONE:
-                break;
-        }
-
         ESP_LOGD(TAG,
             "Slot %d | Distance: %.2f cm | State: %s",
             slot->config.id,
@@ -227,10 +251,11 @@ esp_err_t parking_lot_scan(parking_lot_t* lot) {
     parking_lot_update_counts(lot);
 
     ESP_LOGI(TAG,
-        "Parking Lot | Total: %zu | Occupied: %zu | Available: %zu",
+        "Parking Lot | Total: %zu | Occupied: %zu | Available: %zu | Errors: %zu",
         parking_lot_get_total(lot),
         parking_lot_get_occupied(lot),
-        parking_lot_get_available(lot));
+        parking_lot_get_available(lot),
+        parking_lot_get_error(lot));
 
     return ESP_OK;
 }
@@ -257,4 +282,12 @@ size_t parking_lot_get_available(const parking_lot_t* lot) {
     }
 
     return lot->available_count;
+}
+
+size_t parking_lot_get_error(const parking_lot_t* lot) {
+    if (lot == NULL) {
+        return 0;
+    }
+
+    return lot->error_count;
 }

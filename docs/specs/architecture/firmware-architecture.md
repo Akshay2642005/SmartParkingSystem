@@ -75,7 +75,26 @@ ESP-IDF / FreeRTOS
 - A consumer can determine what happened, which slot, and why — without
   touching the slot array. `ERROR` transitions do not produce events; recovery
   emits only real occupancy changes.
+
+  Event flow — the state machine never logs; `handle_parking_event()` is the
+  single seam where consumers attach (logger today; event queue / networking
+  later):
+
+  ```text
+  parking_slot_update() -> parking_event_t -> handle_parking_event()
+  ```
+
 - Events drive INFO logging; detailed measurements are logged at DEBUG.
+
+### Lot Statistics
+
+- Four counters on `parking_lot_t`, recomputed after every scan by
+  `parking_lot_update_counts()`: total (`slot_count`), occupied, available,
+  error.
+- Invariant: `total = occupied + available + error`. ERROR slots are not
+  bookable and are excluded from `available_count`.
+- Query API: `parking_lot_get_total/_occupied/_available/_error` (all
+  const-correct).
 
 ### Slot Configuration
 

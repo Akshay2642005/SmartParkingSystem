@@ -18,11 +18,15 @@ session:
       pre-error state restore, no spurious events)
     - Phase 6 — Event model (events identify the slot and the measurement
       that caused the change)
+    - Phase 7 — Event handling separation (handle_parking_event as the single
+      consumer seam; state machine does not log)
+    - Phase 8 — Lot statistics (error_count added, total = occupied + available
+      + error invariant)
   in_progress:
     - M2 — Sensor Layer hardening (Local Embedded Logic Improvements)
     - Firmware code documentation and spec synchronization
   next:
-    - Phase 7 — Event Handling Separation
+    - Phase 9 — Parking Lot Query API (audit; getter already landed with Phase 8)
     - Verify sensor integration in Wokwi
     - Decide device communication protocol (ADR-0005)
     - Begin M3 — Device Platform

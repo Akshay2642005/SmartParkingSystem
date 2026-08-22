@@ -63,6 +63,7 @@ typedef struct {
     size_t slot_count;      /**< Number of slots in the array. */
     size_t occupied_count;  /**< Slots currently OCCUPIED. */
     size_t available_count; /**< Slots currently FREE. */
+    size_t error_count;     /**< Slots currently in PARKING_ERROR. */
 } parking_lot_t;
 
 /**
@@ -145,6 +146,9 @@ size_t parking_lot_get_occupied(const parking_lot_t* lot);
 
 /** @return Number of FREE (available) slots. */
 size_t parking_lot_get_available(const parking_lot_t* lot);
+
+/** @return Number of ERRORED slots. */
+size_t parking_lot_get_error(const parking_lot_t* lot);
 
 /** @return Human-readable name for a parking state. */
 const char* parking_state_to_string(parking_state_t state);

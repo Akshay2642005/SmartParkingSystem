@@ -91,6 +91,8 @@ event only for a real occupancy change (see table above).
 - Clear, implemented, testable state model (`FR-002`, `FR-011`).
 - Explicit failure state that never fabricates occupancy.
 - Deterministic `ERROR` recovery with no spurious events.
+- ERROR slots are counted separately in lot statistics and never appear as
+  available.
 
 ### Negative
 
