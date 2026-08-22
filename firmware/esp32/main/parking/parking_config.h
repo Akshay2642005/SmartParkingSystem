@@ -22,5 +22,13 @@
  */
 #define PARKING_FILTER_ALPHA 0.3f
 
+/**
+ * Consecutive readings of the same candidate state required before an
+ * occupancy transition fires. Confirmation counting is signal-processing
+ * policy shared by all identical sensors, hence global rather than per-slot.
+ */
+#define PARKING_OCCUPIED_CONFIRMATION_COUNT 2
+#define PARKING_FREE_CONFIRMATION_COUNT 2
+
 /** Slot table defined in parking_config.c. */
 extern const parking_slot_config_t slot_configs[PARKING_SLOT_COUNT];

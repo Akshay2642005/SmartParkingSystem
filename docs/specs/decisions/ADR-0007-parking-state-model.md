@@ -63,7 +63,23 @@ On the first valid measurement after `ERROR`, `parking_slot_update()` decides:
 Recovering to the same state the slot had before the failure is not an
 occupancy change and emits no event; recovering to the other state means the
 occupancy changed during the outage and emits the corresponding event.
-Debouncing of recovery readings is out of scope (planned: occupancy debouncing).
+
+## Debounce
+
+Occupancy transitions are debounced: a transition fires only after
+`PARKING_*_CONFIRMATION_COUNT` consecutive readings of the same candidate state
+(occupied-side or free-side, configurable independently). Rules:
+
+- Candidate classification uses the hysteresis thresholds unchanged.
+- An ambiguous hysteresis-band reading resets the confirmation counter — band
+  readings never confirm anything and never flip state.
+- Readings that agree with the current state also reset the counter.
+- `ERROR` recovery is deliberately **not** debounced (see above): the slot was
+  blind during the failure, so requiring more confirmations delays truth
+  without adding safety.
+
+Together with the upstream EMA filter this yields the pipeline:
+measurement → filter → threshold → debounce → state transition.
 
 ## Events
 

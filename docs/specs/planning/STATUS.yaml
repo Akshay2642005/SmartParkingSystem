@@ -35,6 +35,8 @@ completed:
     distance)
   - Phase 11 — Measurement stability (per-slot EMA filter, seeded on first
     valid reading; invalid readings bypass the filter)
+  - Phase 12 — Occupancy debouncing (configurable N-consecutive confirmation,
+    band readings reset counters, recovery stays immediate)
 
 in_progress:
   - M2 — Sensor Layer hardening (Local Embedded Logic Improvements)

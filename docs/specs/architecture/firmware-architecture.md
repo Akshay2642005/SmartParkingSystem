@@ -46,8 +46,9 @@ ESP-IDF / FreeRTOS
   slot: measure the ultrasonic sensor, validate the reading (invalid →
   `ERROR`, scan continues), smooth it through a per-slot EMA filter
   (`PARKING_FILTER_ALPHA`, seeded by the first valid reading), feed the stable
-  distance to the state machine, process state-change events, and finally
-  refresh lot statistics.
+  distance to the state machine — where transitions require
+  `PARKING_*_CONFIRMATION_COUNT` consecutive agreeing readings (debouncing) —
+  process state-change events, and finally refresh lot statistics.
 
 ### Tasks & Scheduling
 

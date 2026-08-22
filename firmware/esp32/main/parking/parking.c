@@ -98,6 +98,26 @@ static void handle_parking_event(const parking_event_t* event) {
     }
 }
 
+/**
+ * Classify one filtered reading against slot thresholds (hysteresis).
+ *
+ * Returns PARKING_ERROR as the "ambiguous hysteresis band" marker for the
+ * debouncer — not as an error condition.
+ *
+ * Spec: docs/specs/decisions/ADR-0007-parking-state-model.md.
+ */
+static parking_state_t parking_classify(const parking_slot_t* slot, float distance_cm) {
+    if (distance_cm <= slot->config.occupied_threshold_cm) {
+        return PARKING_OCCUPIED;
+    }
+
+    if (distance_cm >= slot->config.free_threshold_cm) {
+        return PARKING_FREE;
+    }
+
+    return PARKING_ERROR;
+}
+
 esp_err_t parking_slot_init(parking_slot_t* slot, const parking_slot_config_t* config) {
     if (slot == NULL || config == NULL) {
         return ESP_ERR_INVALID_ARG;
@@ -109,6 +129,8 @@ esp_err_t parking_slot_init(parking_slot_t* slot, const parking_slot_config_t* c
     slot->distance_cm = 0.0f;
     slot->filtered_distance_cm = 0.0f;
     slot->filter_seeded = false;
+    slot->pending_state = PARKING_FREE;
+    slot->confirmation_count = 0;
 
     // Initialize the slot's sensor; failure here is a fatal configuration error.
     return ultrasonic_init(&slot->sensor, &slot->config.sensor);
@@ -121,44 +143,65 @@ parking_event_t parking_slot_update(parking_slot_t* slot, float distance_cm) {
 
     slot->distance_cm = distance_cm;
 
-    // ADR-0007 transition rules with hysteresis:
-    //   FREE:     distance <= occupied_threshold_cm -> OCCUPIED
-    //   OCCUPIED: distance >= free_threshold_cm     -> FREE
-    //   ERROR:    first valid measurement recovers (see case below)
+    const parking_state_t candidate = parking_classify(slot, distance_cm);
+
+    // ADR-0007 transition rules:
+    //   FREE/OCCUPIED: a transition requires PARKING_*_CONFIRMATION_COUNT
+    //     consecutive readings of the same candidate state; an ambiguous
+    //     hysteresis-band reading resets the count (no evidence either way).
+    //   ERROR: recovery is deliberately not debounced — the slot was blind
+    //     during the failure, so the first valid measurement decides.
     switch (slot->state) {
         case PARKING_FREE:
-            if (distance_cm <= slot->config.occupied_threshold_cm) {
-                slot->state = PARKING_OCCUPIED;
-                return make_parking_event(PARKING_EVENT_SLOT_OCCUPIED, slot);
+        case PARKING_OCCUPIED: {
+            if (candidate == PARKING_ERROR || candidate == slot->state) {
+                // Ambiguous or agrees with current state: nothing to confirm.
+                slot->pending_state = PARKING_FREE;
+                slot->confirmation_count = 0;
+                break;
             }
-            break;
 
-        case PARKING_OCCUPIED:
-            if (distance_cm >= slot->config.free_threshold_cm) {
-                slot->state = PARKING_FREE;
-                return make_parking_event(PARKING_EVENT_SLOT_FREED, slot);
+            if (candidate == slot->pending_state) {
+                slot->confirmation_count++;
+            } else {
+                slot->pending_state = candidate;
+                slot->confirmation_count = 1;
             }
-            break;
+
+            const uint8_t required = (candidate == PARKING_OCCUPIED)
+                                         ? PARKING_OCCUPIED_CONFIRMATION_COUNT
+                                         : PARKING_FREE_CONFIRMATION_COUNT;
+
+            if (slot->confirmation_count < required) {
+                break;
+            }
+
+            // Confirmed: fire the transition.
+            slot->state = candidate;
+            slot->pending_state = PARKING_FREE;
+            slot->confirmation_count = 0;
+
+            return make_parking_event(
+                candidate == PARKING_OCCUPIED ? PARKING_EVENT_SLOT_OCCUPIED : PARKING_EVENT_SLOT_FREED,
+                slot);
+        }
 
         case PARKING_ERROR: {
-            // Deterministic recovery from the first valid measurement.
-            parking_state_t recovered;
-
-            if (distance_cm <= slot->config.occupied_threshold_cm) {
-                recovered = PARKING_OCCUPIED;
-            } else if (distance_cm >= slot->config.free_threshold_cm) {
-                recovered = PARKING_FREE;
-            } else {
-                // Ambiguous hysteresis band: restore the pre-error state, no guess.
-                recovered = slot->state_before_error;
-            }
+            // Deterministic recovery from the first valid measurement. An
+            // ambiguous hysteresis band restores the pre-error state, no guess.
+            parking_state_t recovered =
+                (candidate == PARKING_ERROR) ? slot->state_before_error : candidate;
 
             slot->state = recovered;
+            slot->pending_state = PARKING_FREE;
+            slot->confirmation_count = 0;
 
-            // Only a genuine occupancy change produces an event; recovering to the
-            // state the slot already had is silent.
+            // Only a genuine occupancy change produces an event; recovering to
+            // the state the slot already had is silent.
             if (recovered != slot->state_before_error) {
-                return make_parking_event(recovered == PARKING_OCCUPIED ? PARKING_EVENT_SLOT_OCCUPIED : PARKING_EVENT_SLOT_FREED, slot);
+                return make_parking_event(
+                    recovered == PARKING_OCCUPIED ? PARKING_EVENT_SLOT_OCCUPIED : PARKING_EVENT_SLOT_FREED,
+                    slot);
             }
 
             break;

@@ -27,6 +27,10 @@ terms:
     term: Hysteresis
     definition: The gap between the occupied threshold and the free threshold that prevents a slot state from flapping on noisy readings.
 
+  - id: debounce
+    term: Debounce
+    definition: Requiring N consecutive agreeing readings before an occupancy transition fires, so a single noisy measurement cannot flip the state.
+
   - id: threshold
     term: Threshold
     definition: A configured distance in centimeters used to decide whether a slot is occupied or free.

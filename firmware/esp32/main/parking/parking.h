@@ -58,6 +58,8 @@ typedef struct {
     float distance_cm;                  /**< Latest raw measured distance. */
     float filtered_distance_cm;         /**< EMA-smoothed distance driving decisions. */
     bool filter_seeded;                 /**< True after the first valid measurement seeded the filter. */
+    parking_state_t pending_state;      /**< Candidate being confirmed; PARKING_FREE means none. */
+    uint8_t confirmation_count;         /**< Consecutive sightings of pending_state. */
 } parking_slot_t;
 
 /** Aggregate view over all slots in the lot. */
@@ -84,14 +86,16 @@ esp_err_t parking_slot_init(parking_slot_t* slot, const parking_slot_config_t* c
  * Feed one measured distance into the slot state machine (FR-002, FR-011).
  *
  * Transition rules (ADR-0007):
- *   FREE:      distance <= occupied_threshold_cm -> OCCUPIED (SLOT_OCCUPIED)
- *   OCCUPIED:  distance >= free_threshold_cm     -> FREE     (SLOT_FREED)
- *   ERROR:     first valid measurement decides:
- *                <= occupied_threshold_cm        -> OCCUPIED
- *                >= free_threshold_cm            -> FREE
- *                hysteresis band                 -> restore state_before_error
- *              An event is emitted only when the recovered state differs
- *              from state_before_error (a real occupancy change).
+ *   FREE/OCCUPIED: threshold classification with hysteresis; a transition
+ *     fires only after PARKING_*_CONFIRMATION_COUNT consecutive readings of
+ *     the same candidate state (debouncing). Ambiguous hysteresis-band
+ *     readings reset the confirmation counter.
+ *   ERROR: first valid measurement recovers, deliberately not debounced:
+ *     <= occupied_threshold_cm        -> OCCUPIED
+ *     >= free_threshold_cm            -> FREE
+ *     hysteresis band                 -> restore state_before_error
+ *   Events are emitted only for actual transitions; recovery to the pre-error
+ *   state is silent.
  * Hysteresis between the two thresholds prevents flapping on noise.
  *
  * @param slot        Slot to update.
