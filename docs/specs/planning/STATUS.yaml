@@ -29,6 +29,8 @@ completed:
     consumer seam; state machine does not log)
   - Phase 8 — Lot statistics (error_count added, total = occupied + available
     + error invariant)
+  - Phase 9 — Lot query API audit (four const-correct getters, query block
+    documented)
 
 in_progress:
   - M2 — Sensor Layer hardening (Local Embedded Logic Improvements)

@@ -120,7 +120,10 @@ void parking_slot_mark_error(parking_slot_t* slot);
 void parking_lot_init(parking_lot_t* lot, parking_slot_t* slots, size_t slot_count);
 
 /**
- * Recompute lot statistics (occupied/available counts) from slot states.
+ * Recompute lot statistics from slot states.
+ *
+ * Maintains the invariant total = occupied + available + error; ERROR slots
+ * are excluded from available_count because they are not bookable.
  *
  * @param lot Lot to update.
  */
@@ -138,16 +141,23 @@ void parking_lot_update_counts(parking_lot_t* lot);
  */
 esp_err_t parking_lot_scan(parking_lot_t* lot);
 
+/*
+ * Lot query API: const-correct read views over the counters recomputed by
+ * parking_lot_update_counts() after each scan. Counts are size_t to match
+ * slot_count and array indexing; fixed-width mapping belongs to the telemetry
+ * encoder once networking lands.
+ */
+
 /** @return Total number of slots in the lot. */
 size_t parking_lot_get_total(const parking_lot_t* lot);
 
 /** @return Number of OCCUPIED slots. */
 size_t parking_lot_get_occupied(const parking_lot_t* lot);
 
-/** @return Number of FREE (available) slots. */
+/** @return Number of FREE (bookable) slots; ERROR slots are excluded. */
 size_t parking_lot_get_available(const parking_lot_t* lot);
 
-/** @return Number of ERRORED slots. */
+/** @return Number of slots currently in ERROR state. */
 size_t parking_lot_get_error(const parking_lot_t* lot);
 
 /** @return Human-readable name for a parking state. */
