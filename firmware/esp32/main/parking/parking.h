@@ -26,6 +26,18 @@ typedef enum {
     PARKING_EVENT_NONE,          /**< No state change this update. */
     PARKING_EVENT_SLOT_OCCUPIED, /**< Slot transitioned FREE -> OCCUPIED. */
     PARKING_EVENT_SLOT_FREED,    /**< Slot transitioned OCCUPIED -> FREE. */
+} parking_event_type_t;
+
+/**
+ * Occupancy event with full context.
+ * Produced by parking_slot_update(); consumed by the caller.
+ * Spec: docs/specs/product/GLOSSARY.yaml (parking_event),
+ *       docs/specs/decisions/ADR-0007-parking-state-model.md (Events).
+ */
+typedef struct {
+    parking_event_type_t type; /**< Type of event. */
+    uint8_t slot_id;           /**< Slot identifier (copied from config). */
+    float distance_cm;         /**< Distance that triggered the event. */
 } parking_event_t;
 
 /** Per-slot configuration (see parking_config.c). */
@@ -82,7 +94,11 @@ esp_err_t parking_slot_init(parking_slot_t* slot, const parking_slot_config_t* c
  * @param distance_cm Validated distance in centimeters (see
  *                    parking_measurement_is_valid); callers must not pass
  *                    unvalidated sensor output.
- * @return The event describing the state change, or PARKING_EVENT_NONE.
+ *
+ * @return Event describing the state change. type == PARKING_EVENT_NONE means
+ *         no transition occurred; ERROR transitions never produce occupancy
+ *         events, and recovery emits an event only for a real occupancy change
+ *         (ADR-0007).
  */
 parking_event_t parking_slot_update(parking_slot_t* slot, float distance_cm);
 

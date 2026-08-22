@@ -21,7 +21,7 @@ static const char* TAG = "parking";
  * the HC-SR04 supported range. Invalid measurements must never be converted
  * into FREE or OCCUPIED.
  *
- * Spec: PROMPT.md Phase 4, docs/specs/product/REQUIREMENTS.md (FR-012),
+ * Spec: docs/specs/product/REQUIREMENTS.md (FR-012),
  *       docs/specs/decisions/ADR-0004-sensor-selection.md (driver limits).
  */
 static bool parking_measurement_is_valid(float distance_cm) {
@@ -34,6 +34,19 @@ static bool parking_measurement_is_valid(float distance_cm) {
     }
 
     return distance_cm >= ULTRASONIC_MIN_DISTANCE_CM && distance_cm <= ULTRASONIC_MAX_DISTANCE_CM;
+}
+
+/**
+ * Centralizes event construction so every transition site carries the same
+ * context (slot id + measurement that caused the change).
+ */
+static parking_event_t make_parking_event(parking_event_type_t type, const parking_slot_t* slot) {
+    parking_event_t event = {
+        .type = type,
+        .slot_id = slot->config.id,
+        .distance_cm = slot->distance_cm,
+    };
+    return event;
 }
 
 esp_err_t parking_slot_init(parking_slot_t* slot, const parking_slot_config_t* config) {
@@ -52,7 +65,7 @@ esp_err_t parking_slot_init(parking_slot_t* slot, const parking_slot_config_t* c
 
 parking_event_t parking_slot_update(parking_slot_t* slot, float distance_cm) {
     if (slot == NULL) {
-        return PARKING_EVENT_NONE;
+        return (parking_event_t){PARKING_EVENT_NONE, 0, 0.0f};
     }
 
     slot->distance_cm = distance_cm;
@@ -65,14 +78,14 @@ parking_event_t parking_slot_update(parking_slot_t* slot, float distance_cm) {
         case PARKING_FREE:
             if (distance_cm <= slot->config.occupied_threshold_cm) {
                 slot->state = PARKING_OCCUPIED;
-                return PARKING_EVENT_SLOT_OCCUPIED;
+                return make_parking_event(PARKING_EVENT_SLOT_OCCUPIED, slot);
             }
             break;
 
         case PARKING_OCCUPIED:
             if (distance_cm >= slot->config.free_threshold_cm) {
                 slot->state = PARKING_FREE;
-                return PARKING_EVENT_SLOT_FREED;
+                return make_parking_event(PARKING_EVENT_SLOT_FREED, slot);
             }
             break;
 
@@ -94,14 +107,14 @@ parking_event_t parking_slot_update(parking_slot_t* slot, float distance_cm) {
             // Only a genuine occupancy change produces an event; recovering to the
             // state the slot already had is silent.
             if (recovered != slot->state_before_error) {
-                return recovered == PARKING_OCCUPIED ? PARKING_EVENT_SLOT_OCCUPIED : PARKING_EVENT_SLOT_FREED;
+                return make_parking_event(recovered == PARKING_OCCUPIED ? PARKING_EVENT_SLOT_OCCUPIED : PARKING_EVENT_SLOT_FREED, slot);
             }
 
             break;
         }
     }
 
-    return PARKING_EVENT_NONE;
+    return (parking_event_t){PARKING_EVENT_NONE, 0, 0.0f};
 }
 
 void parking_slot_mark_error(parking_slot_t* slot) {
@@ -191,7 +204,7 @@ esp_err_t parking_lot_scan(parking_lot_t* lot) {
         parking_event_t event = parking_slot_update(slot, distance_cm);
 
         // Event-based INFO logging; detailed readings stay at DEBUG level.
-        switch (event) {
+        switch (event.type) {
             case PARKING_EVENT_SLOT_OCCUPIED:
                 ESP_LOGI(TAG, "Slot %d became OCCUPIED", slot->config.id);
                 break;

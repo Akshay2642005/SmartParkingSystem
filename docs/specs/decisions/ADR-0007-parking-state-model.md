@@ -68,10 +68,11 @@ Debouncing of recovery readings is out of scope (planned: occupancy debouncing).
 ## Events
 
 State changes emit events (`PARKING_EVENT_SLOT_OCCUPIED`, `PARKING_EVENT_SLOT_FREED`)
-returned by `parking_slot_update()`. `FREE → ERROR` transitions do not emit an
-occupancy event. Recovery from `ERROR` emits an event only for a real occupancy
-change (see table above). Event representation is evolving in Phase 6 of the
-Local Embedded Logic Improvements.
+returned by `parking_slot_update()`. Each event is a self-describing struct
+carrying the event type, the generating slot's id, and the measurement that
+caused it — consumers never need to reach back into slot state. `FREE → ERROR`
+transitions do not emit an occupancy event. Recovery from `ERROR` emits an
+event only for a real occupancy change (see table above).
 
 ## Behavior for Edge Conditions
 

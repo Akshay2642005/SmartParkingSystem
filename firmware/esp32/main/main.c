@@ -43,8 +43,8 @@ void app_main(void) {
 
     ESP_LOGI(TAG, "Initialized %d parking slots", PARKING_SLOT_COUNT);
 
-    // Periodic scan loop. The 1 s interval is scheduled for configuration
-    // (Phase 13); polling stays here until the dedicated task lands (Phase 14).
+    // Periodic scan loop. The 1 s interval becomes a named configuration
+    // constant later; polling stays here until the dedicated parking task lands.
     while (1) {
         ESP_ERROR_CHECK(parking_lot_scan(&parking_lot));
 

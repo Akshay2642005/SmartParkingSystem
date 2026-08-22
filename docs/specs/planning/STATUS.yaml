@@ -23,6 +23,8 @@ completed:
     never silently FREE/OCCUPIED)
   - Phase 5 — Parking slot state machine (deterministic ERROR recovery,
     pre-error state restore, no spurious events)
+  - Phase 6 — Event model (events identify the slot and the measurement
+    that caused the change)
 
 in_progress:
   - M2 — Sensor Layer hardening (Local Embedded Logic Improvements)

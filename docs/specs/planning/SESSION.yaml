@@ -16,11 +16,13 @@ session:
       never silently FREE/OCCUPIED)
     - Phase 5 — Parking slot state machine (deterministic ERROR recovery,
       pre-error state restore, no spurious events)
+    - Phase 6 — Event model (events identify the slot and the measurement
+      that caused the change)
   in_progress:
     - M2 — Sensor Layer hardening (Local Embedded Logic Improvements)
     - Firmware code documentation and spec synchronization
   next:
-    - Phase 6 — Event Model Improvement
+    - Phase 7 — Event Handling Separation
     - Verify sensor integration in Wokwi
     - Decide device communication protocol (ADR-0005)
     - Begin M3 — Device Platform

@@ -64,8 +64,17 @@ ESP-IDF / FreeRTOS
 
 ### Events
 
-- `parking_slot_update()` returns `parking_event_t`
-  (`PARKING_EVENT_SLOT_OCCUPIED` / `PARKING_EVENT_SLOT_FREED`).
+- `parking_slot_update()` returns a self-describing `parking_event_t` struct:
+
+  | Field | Meaning |
+  | ----- | ------- |
+  | `type` | `PARKING_EVENT_NONE` / `PARKING_EVENT_SLOT_OCCUPIED` / `PARKING_EVENT_SLOT_FREED` |
+  | `slot_id` | Which slot generated the event (from slot config). |
+  | `distance_cm` | Measurement that caused the change. |
+
+- A consumer can determine what happened, which slot, and why — without
+  touching the slot array. `ERROR` transitions do not produce events; recovery
+  emits only real occupancy changes.
 - Events drive INFO logging; detailed measurements are logged at DEBUG.
 
 ### Slot Configuration
