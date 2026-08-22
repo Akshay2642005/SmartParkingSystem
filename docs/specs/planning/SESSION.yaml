@@ -45,12 +45,14 @@ session:
       algorithm knobs, single definition site per constant)
     - Phase 18 — Static memory review (audit table with evidence in
       firmware-architecture; 81 percent stack headroom measured in Wokwi)
+    - Phase 19 — Wokwi simulation improvements (wiring audit, debug injection
+      hook gated by CONFIG_PARKING_DEBUG_INJECT, headless matrix scenario;
+      sensor-integration verification PASS)
   in_progress:
     - M2 — Sensor Layer hardening (Local Embedded Logic Improvements)
-    - Firmware code documentation and spec synchronization
+    - Phase 20 — Automated local testing (host unit tests for parking logic)
   next:
-    - Phase 19 — Wokwi simulation review
-    - Verify sensor integration in Wokwi
+    - Record PROMPT.md completion-criteria audit in SESSION.yaml (M2 close)
     - Decide device communication protocol (ADR-0005)
     - Begin M3 — Device Platform
   blockers:

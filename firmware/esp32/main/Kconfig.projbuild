@@ -1,0 +1,12 @@
+menu "Parking debug"
+  config PARKING_DEBUG_INJECT
+    bool "Enable distance injection over serial console (debug only)"
+    default n
+      help
+        Adds a debug console task on UART0 that accepts
+        setdist <slot-id> <cm>
+        lines (e.g. "setdist 1 25") and feeds the value into the next scan
+        of that slot as if the sensor had measured it. The injected value
+        flows through the same validate -> filter -> debounce pipeline as a
+        real measurement. Production builds leave this disabled (default n).
+endmenu

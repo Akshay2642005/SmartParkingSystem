@@ -190,3 +190,20 @@ float parking_slot_get_distance_cm(const parking_slot_t* slot);
 
 /** @return Human-readable name for a parking state. */
 const char* parking_state_to_string(parking_state_t state);
+
+#if CONFIG_PARKING_DEBUG_INJECT
+/**
+ * Test hook (debug builds only, CONFIG_PARKING_DEBUG_INJECT): queue a raw
+ * measurement for the next scan of the slot at @p slot_index (0-based). The
+ * value replaces the sensor reading for exactly one scan and flows through
+ * the same validate -> filter -> debounce pipeline as a real measurement —
+ * including rejection by validation when implausible.
+ *
+ * Not thread-safe: call from the debug console task only.
+ *
+ * @param slot_index  0-based slot position; must be < PARKING_SLOT_COUNT.
+ * @param distance_cm Value to inject (may be deliberately invalid, e.g. NaN).
+ * @return ESP_OK, or ESP_ERR_INVALID_ARG if @p slot_index is out of range.
+ */
+esp_err_t parking_debug_inject_distance(size_t slot_index, float distance_cm);
+#endif

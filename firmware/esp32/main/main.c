@@ -6,6 +6,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
+#include "debug_console.h"
 #include "parking.h"
 #include "parking_config.h"
 #include "parking_settings.h"
@@ -83,4 +84,6 @@ void app_main(void) {
         NULL);
 
     ESP_ERROR_CHECK(created == pdPASS ? ESP_OK : ESP_FAIL);
+
+    debug_console_start();
 }

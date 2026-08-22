@@ -1,0 +1,12 @@
+# Headless smoke test for the parking firmware (wokwi-cli --scenario).
+#
+# Verifies boot and the first scan cycle with zero interaction. Occupancy and
+# error paths are exercised by wokwi-scenario-injection.yaml via the
+# PARKING_DEBUG_INJECT serial hook.
+name: parking-smoke
+version: 1
+author: Akshay
+steps:
+  - wait-serial: 'Smart Parking System'
+  - wait-serial: 'Initialized 3 parking slots'
+  - wait-serial: 'Parking Lot | Total: 3 | Occupied:'

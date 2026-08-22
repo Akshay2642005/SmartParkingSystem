@@ -17,6 +17,23 @@
  * E sensor/reading failures - W recovery/unusual - I events+summary - D measurements. */
 static const char* TAG = "parking";
 
+#if CONFIG_PARKING_DEBUG_INJECT
+/** Queued debug injections for the next scan, per slot index (see parking.h). */
+static float s_debug_distance[PARKING_SLOT_COUNT];
+static bool s_debug_has_distance[PARKING_SLOT_COUNT];
+
+esp_err_t parking_debug_inject_distance(size_t slot_index, float distance_cm) {
+    if (slot_index >= PARKING_SLOT_COUNT) {
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    s_debug_distance[slot_index] = distance_cm;
+    s_debug_has_distance[slot_index] = true;
+
+    return ESP_OK;
+}
+#endif
+
 /**
  * Validate a raw measurement before it may influence parking state.
  *
@@ -283,11 +300,33 @@ esp_err_t parking_lot_scan(parking_lot_t* lot) {
         return ESP_ERR_INVALID_ARG;
     }
 
+#if CONFIG_PARKING_DEBUG_INJECT
+    for (size_t i = 0; i < lot->slot_count && i < PARKING_SLOT_COUNT; i++) {
+        if (s_debug_has_distance[i]) {
+            ESP_LOGI(TAG,
+                "Slot %d | Debug inject: %.2f cm",
+                lot->slots[i].config.id,
+                (double)s_debug_distance[i]);
+        }
+    }
+#endif
+
     for (size_t i = 0; i < lot->slot_count; i++) {
         parking_slot_t* slot = &lot->slots[i];
         float distance_cm;
 
         esp_err_t result = ultrasonic_measure_cm(&slot->sensor, &distance_cm);
+
+#if CONFIG_PARKING_DEBUG_INJECT
+        // Debug hook: a queued injection replaces the sensor reading for this
+        // scan only, then flows through the normal validate -> filter ->
+        // debounce pipeline (including rejection when implausible).
+        if (i < PARKING_SLOT_COUNT && s_debug_has_distance[i]) {
+            distance_cm = s_debug_distance[i];
+            s_debug_has_distance[i] = false;
+            result = ESP_OK;
+        }
+#endif
 
         if (result != ESP_OK) {
             // Recoverable runtime error: mark the slot and keep scanning the rest.

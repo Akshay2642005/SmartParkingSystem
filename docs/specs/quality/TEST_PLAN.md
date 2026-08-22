@@ -17,10 +17,20 @@ System.
 
 ## Simulation
 
-- **Wokwi boot**: firmware boots in Wokwi (see `../decisions/ADR-0003-wokwi.md`).
+- **Wokwi boot**: firmware boots in Wokwi (see `../decisions/ADR-0003-wokwi.md`);
+  scenario `firmware/esp32/tests/wokwi-scenario.yaml`.
 - **Sensor behavior**: `wokwi-hc-sr04` distance changes reflected in firmware.
-- **State transitions**: FREE ⇄ OCCUPIED transitions observed (sensor1 at 10 cm
-  occupied; sensors 2/3 at 100 cm free).
+  Diagram wiring is audited against `slot_configs[]` (GPIOs 5/18, 19/21, 22/23).
+- **Headless state matrix**: `tests/wokwi-scenario-injection.yaml` drives the
+  full occupancy/error matrix through the `PARKING_DEBUG_INJECT` serial hook
+  (`setdist <slot> <cm>`; build-time gated in `Kconfig.projbuild`, compiled out
+  for release). Injected values traverse validate → EMA filter → debounce
+  exactly like real measurements. Covers: all free, per-slot occupation,
+  freeing via override, multiple occupied, hysteresis band hold, persistent
+  invalid-measurement ERROR, and recovery with event. Record:
+  `verifications/sensor-integration.md`.
+- **State transitions**: FREE ⇄ OCCUPIED events observed on the serial log
+  (`Slot N became OCCUPIED/FREE` + lot summary invariant).
 - **Connectivity**: device connection behavior (once protocol decided).
 
 ## Backend
