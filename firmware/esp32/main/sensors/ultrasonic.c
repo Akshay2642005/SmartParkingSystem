@@ -19,6 +19,8 @@
  *   4. convert the round-trip time to a one-way distance.
  */
 
+/* Logging convention (firmware-architecture.md § Logging):
+ * E sensor/reading failures - W recovery/unusual - I events+summary - D measurements. */
 static const char* TAG = "ultrasonic";
 
 /** Minimum measurable distance in cm (HC-SR04 datasheet). */

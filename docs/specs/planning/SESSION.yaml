@@ -39,11 +39,13 @@ session:
     - Phase 15 — Error handling strategy (policy documented in
       firmware-architecture § Error Handling Policy; trigger-side GPIO
       failures surface as recoverable ESP_ERR_INVALID_STATE)
+    - Phase 16 — Logging convention (level table documented in
+      firmware-architecture § Logging; WARN on ERROR recovery)
   in_progress:
     - M2 — Sensor Layer hardening (Local Embedded Logic Improvements)
     - Firmware code documentation and spec synchronization
   next:
-    - Phase 16 — Logging
+    - Phase 17 — Configuration cleanup
     - Verify sensor integration in Wokwi
     - Decide device communication protocol (ADR-0005)
     - Begin M3 — Device Platform

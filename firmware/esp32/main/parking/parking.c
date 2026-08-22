@@ -12,6 +12,8 @@
  *       docs/specs/product/REQUIREMENTS.md (FR-001..FR-003, FR-010..FR-012).
  */
 
+/* Logging convention (firmware-architecture.md § Logging):
+ * E sensor/reading failures - W recovery/unusual - I events+summary - D measurements. */
 static const char* TAG = "parking";
 
 /**
@@ -302,8 +304,20 @@ esp_err_t parking_lot_scan(parking_lot_t* lot) {
 
         const float stable_cm = parking_filter_distance(slot, distance_cm);
 
+        const parking_state_t state_before_update = slot->state;
+
         parking_event_t event = parking_slot_update(slot, stable_cm);
         handle_parking_event(&event);
+
+        // Recovery from ERROR is unusual-but-recovered: WARN once. The event
+        // guard keeps silent band-restores silent (ADR-0007).
+        if (state_before_update == PARKING_ERROR && slot->state != PARKING_ERROR &&
+            event.type != PARKING_EVENT_NONE) {
+            ESP_LOGW(TAG,
+                "Slot %d recovered from ERROR -> %s",
+                slot->config.id,
+                parking_state_to_string(slot->state));
+        }
 
         // Event-based INFO logging; detailed readings stay at DEBUG level.
         ESP_LOGD(TAG,

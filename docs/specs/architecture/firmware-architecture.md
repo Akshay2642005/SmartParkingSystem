@@ -168,9 +168,30 @@ deterministic recovery on first valid measurement (ADR-0007)
 
 ### Logging
 
-- Tags: `parking` (state/events), `ultrasonic` (sensor lifecycle).
-- Levels: INFO for events/system status, DEBUG for per-slot measurements,
-  ERROR for failures.
+Tags: `parking` (state/events), `ultrasonic` (sensor lifecycle) — nothing else.
+
+Level convention:
+
+| Level | Use in this project |
+| ----- | ------------------- |
+| `ESP_LOGE` | sensor timeout, invalid measurement (per-scan occurrences) |
+| `ESP_LOGW` | unusual-but-recovered conditions (slot recovered from `ERROR`) |
+| `ESP_LOGI` | occupancy events, lot summary, boot/init status |
+| `ESP_LOGD` | per-slot raw/stable measurements |
+
+Rule of thumb: *events at INFO, measurements at DEBUG*. Recovery from `ERROR`
+logs WARN once; a silent band-restore to the pre-error state logs nothing
+(ADR-0007). Example output:
+
+```text
+I parking: Slot 2 became OCCUPIED
+I parking: Slot 2 became FREE
+W parking: Slot 1 recovered from ERROR -> FREE
+D parking: Slot 2 | Raw: 27.42 cm | Stable: 28.10 cm | State: OCCUPIED
+```
+
+No runtime log-level tuning (`esp_log_level_set`) or custom formatting —
+defaults are fine until networking changes the output budget.
 
 ### Configuration
 

@@ -45,6 +45,8 @@ completed:
     driver and parking validator; absorbs us-timing jitter at the 2 cm floor)
   - Phase 15 — Error handling strategy (policy documented; trigger-side GPIO
     failures now surface as recoverable ESP_ERR_INVALID_STATE)
+  - Phase 16 — Logging convention (level table documented; WARN on ERROR
+    recovery, silent band-restores stay silent)
 
 in_progress:
   - M2 — Sensor Layer hardening (Local Embedded Logic Improvements)
