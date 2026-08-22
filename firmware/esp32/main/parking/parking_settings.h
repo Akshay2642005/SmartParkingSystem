@@ -41,3 +41,6 @@
 
 /** FreeRTOS name of the parking task (shown in traces / stack dumps). */
 #define PARKING_TASK_NAME "parking_task"
+
+/** Scan count after which the one-shot stack high water mark probe logs. */
+#define PARKING_STACK_PROBE_AFTER_SCANS 5

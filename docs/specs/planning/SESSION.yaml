@@ -42,12 +42,14 @@ session:
     - Phase 16 — Logging convention (level table documented in
       firmware-architecture § Logging; WARN on ERROR recovery)
     - Phase 17 — Configuration cleanup (parking_settings.h separates hardware
-      vs algorithm knobs, single definition site per constant)
+      algorithm knobs, single definition site per constant)
+    - Phase 18 — Static memory review (audit table with evidence in
+      firmware-architecture; 81 percent stack headroom measured in Wokwi)
   in_progress:
     - M2 — Sensor Layer hardening (Local Embedded Logic Improvements)
     - Firmware code documentation and spec synchronization
   next:
-    - Phase 18 — Static memory review
+    - Phase 19 — Wokwi simulation review
     - Verify sensor integration in Wokwi
     - Decide device communication protocol (ADR-0005)
     - Begin M3 — Device Platform

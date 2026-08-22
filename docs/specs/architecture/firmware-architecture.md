@@ -193,6 +193,33 @@ D parking: Slot 2 | Raw: 27.42 cm | Stable: 28.10 cm | State: OCCUPIED
 No runtime log-level tuning (`esp_log_level_set`) or custom formatting —
 defaults are fine until networking changes the output budget.
 
+### Embedded Safety Review
+
+Static-memory / embedded safety audit before networking (2026-08-22). Evidence
+recorded per row; a row without evidence counts as failed.
+
+| Requirement | Verdict | Evidence |
+| ----------- | ------- | -------- |
+| No unnecessary heap allocation | ✔ | `grep malloc\|calloc\|realloc\|strdup main/` → zero hits; slot array is `static parking_slot_t slots[PARKING_SLOT_COUNT]` in `main.c`; task stack via `xTaskCreate` is IDF-internal, accepted |
+| No memory leaks | ✔ | All state is struct-resident (`parking_slot_t`, `parking_lot_t`); nothing dynamically owned, nothing to free |
+| No unbounded loops | ✔ | Both ECHO waits in `ultrasonic_measure_cm` bounded by `esp_timer_get_time()` deadlines; task loop period-bounded by `vTaskDelayUntil`; no other loops |
+| Sensor loops have timeouts | ✔ | Both echo waits use `ULTRASONIC_TIMEOUT_US` (30 ms) |
+| No invalid pointer derefs | ✔ | NULL guards on all 10 public entry points across `parking.c` and `ultrasonic.c` (checked line-by-line) |
+| No buffer overflows | ✔ | Only indexed array is `slots[i]`, `i < lot->slot_count`; tables sized `[PARKING_SLOT_COUNT]` at compile time |
+| No recursion | ✔ | All 16 functions in `main/` are flat calls; call graph reviewed, no self/mutual recursion |
+| Bounded execution time | ✔ | Worst-case scan = 3 × (trigger ~15 µs + rise wait 30 ms + fall wait 30 ms) ≈ **180 ms** ≪ 1000 ms scan period; typical scan ≈ tens of µs per slot |
+| Const-correct configuration | ✔ | `const parking_slot_config_t slot_configs[]`; all four query getters take `const parking_lot_t*` / `const parking_slot_t*` (Phase 9 audit) |
+| Appropriate integer types | ✔ | `float` distances · `uint8_t` ids/counts · `size_t` cardinalities · `int64_t` µs timing · `TickType_t` scheduling · `esp_err_t` error codes |
+| No unnecessary large copies | ✔ | One ~20 B config copy at init (`slot->config = *config`); events passed by value ≤ 12 B; everything else by pointer |
+
+Stack headroom (measured in Wokwi, 2026-08-22): parking task high water mark
+**3316 words free of 4096 (81 %)** after the deepest scan + logging path —
+well above the 25 % requirement; `PARKING_TASK_STACK_SIZE` unchanged. The
+probe logs once at DEBUG (`PARKING_STACK_PROBE_AFTER_SCANS`).
+
+Concurrency: single-writer contract documented on `parking_lot_t` — networking
+phases must add locking before cross-task readers.
+
 ### Configuration
 
 Three-file map — every knob has exactly one definition site:

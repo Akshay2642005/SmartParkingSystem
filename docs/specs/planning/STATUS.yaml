@@ -49,6 +49,8 @@ completed:
     recovery, silent band-restores stay silent)
   - Phase 17 — Configuration cleanup (parking_settings.h separates hardware
     algorithm knobs, single definition site per constant)
+  - Phase 18 — Static memory review (audit table with evidence in
+    firmware-architecture; 81 % stack headroom measured in Wokwi)
 
 in_progress:
   - M2 — Sensor Layer hardening (Local Embedded Logic Improvements)

@@ -62,7 +62,13 @@ typedef struct {
     uint8_t confirmation_count;         /**< Consecutive sightings of pending_state. */
 } parking_slot_t;
 
-/** Aggregate view over all slots in the lot. */
+/**
+ * Aggregate view over all slots in the lot.
+ *
+ * Concurrency contract: single-writer today (the parking task). Networking
+ * phases adding cross-task readers must introduce locking (e.g. a mutex or
+ * snapshot copy) before reading lot/slot state outside the parking task.
+ */
 typedef struct {
     parking_slot_t* slots;  /**< Pointer to the statically allocated slot array. */
     size_t slot_count;      /**< Number of slots in the array. */

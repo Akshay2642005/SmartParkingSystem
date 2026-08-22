@@ -47,9 +47,20 @@ static void initialize_slots(void) {
 static void parking_task(void* arg) {
     (void)arg;
     TickType_t last_wake_time = xTaskGetTickCount();
+    uint32_t scan_count = 0;
 
     while (1) {
         ESP_ERROR_CHECK(parking_lot_scan(&parking_lot));
+
+        // One-shot stack headroom probe after the first few scans, once the
+        // deepest call path (scan + logging) has executed. High water mark is
+        // in words (4 B on Xtensa); logged at DEBUG to keep steady-state quiet.
+        if (++scan_count == PARKING_STACK_PROBE_AFTER_SCANS) {
+            ESP_LOGD(TAG,
+                "Parking task stack high water mark: %u words free",
+                (unsigned)uxTaskGetStackHighWaterMark(NULL));
+        }
+
         vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(PARKING_SCAN_INTERVAL_MS));
     }
 }
