@@ -119,12 +119,25 @@ esp_err_t ultrasonic_measure_cm(const ultrasonic_sensor_t* sensor, float* distan
     const gpio_num_t trig = sensor->config.trig_gpio;
     const gpio_num_t echo = sensor->config.echo_gpio;
 
-    // A 10 us HIGH pulse on TRIG starts one measurement cycle.
-    gpio_set_level(trig, 0);
-    esp_rom_delay_us(TRIG_IDLE_US);
-    gpio_set_level(trig, 1);
-    esp_rom_delay_us(TRIG_PULSE_US);
-    gpio_set_level(trig, 0);
+    // A 10 us HIGH pulse on TRIG starts one measurement cycle. A GPIO failure
+    // here is a runtime condition (pin reconfigured or invalid): report it as
+    // a recoverable error instead of measuring garbage.
+    esp_err_t trig_result = gpio_set_level(trig, 0);
+
+    if (trig_result == ESP_OK) {
+        esp_rom_delay_us(TRIG_IDLE_US);
+        trig_result = gpio_set_level(trig, 1);
+
+        if (trig_result == ESP_OK) {
+            esp_rom_delay_us(TRIG_PULSE_US);
+            trig_result = gpio_set_level(trig, 0);
+        }
+    }
+
+    if (trig_result != ESP_OK) {
+        // Runtime GPIO failure -> recoverable error, not a crash.
+        return ESP_ERR_INVALID_STATE;
+    }
 
     // Wait for ECHO to go HIGH (measurement in progress).
     int64_t timeout_start = esp_timer_get_time();

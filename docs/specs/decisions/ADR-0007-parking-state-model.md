@@ -94,7 +94,7 @@ event only for a real occupancy change (see table above).
 
 | Condition | Behavior |
 | --------- | -------- |
-| Measurement timeout / failure | `ERROR` via `parking_slot_mark_error` (`FR-012`) |
+| Measurement timeout / failure | `ERROR` via `parking_slot_mark_error` (`FR-012`; policy: firmware-architecture.md § Error Handling Policy) |
 | Device offline | Backend retains last known state (backend not yet implemented) |
 | Startup | `FREE` until the first measurement completes |
 | Threshold noise / ambiguous readings | Hysteresis prevents flapping |

@@ -14,6 +14,13 @@
  *   - minimum distance: 2 cm
  *   - maximum distance: 400 cm
  *   - measurement timeout: 30 ms (covers the ~23 ms max round trip at 400 cm)
+ *
+ * Error policy: all runtime failures (unresponsive sensor, implausible
+ * reading, GPIO no longer usable) are recoverable by design and reported as
+ * esp_err_t codes — never aborts. The caller decides what to do; the parking
+ * layer maps every failure to a slot ERROR state and keeps scanning.
+ * Policy: docs/specs/architecture/firmware-architecture.md
+ * (§ Error Handling Policy).
  */
 
 /** Minimum measurable distance in centimeters. */
@@ -71,6 +78,8 @@ esp_err_t ultrasonic_init(ultrasonic_sensor_t* sensor, const ultrasonic_config_t
  * @param distance_cm [out] Measured distance; only valid when ESP_OK is returned.
  * @return ESP_OK on success,
  *         ESP_ERR_INVALID_ARG if an argument is invalid,
+ *         ESP_ERR_INVALID_STATE if pulsing TRIG fails at runtime (GPIO no
+ *                        longer usable),
  *         ESP_ERR_TIMEOUT if no ECHO pulse arrives within the timeout window or
  *                        the distance exceeds ULTRASONIC_MAX_DISTANCE_CM,
  *         ESP_ERR_INVALID_RESPONSE if the reading is implausible

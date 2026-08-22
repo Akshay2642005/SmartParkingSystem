@@ -114,7 +114,40 @@ ESP-IDF / FreeRTOS
 - Slot count, GPIO, and thresholds live in `parking/parking_config.c`
   (declared in `parking/parking_config.h`).
 
-### Error Handling
+### Error Handling Policy
+
+Two error classes with distinct handling — fail fast at init, isolate at
+runtime:
+
+| Error class | Examples | Handling | Rationale |
+| ----------- | -------- | -------- | --------- |
+| Fatal init | bad GPIO config (`ultrasonic_init` pin validation), `gpio_config` failure, task creation failure | `ESP_ERROR_CHECK` → abort/boot loop with message | system cannot fulfill its only purpose; fail fast and visibly |
+| Recoverable runtime | ultrasonic timeout, implausible reading, TRIG pulse failure mid-measurement | slot → `ERROR`, log, continue scanning other slots | one flaky sensor must not restart the whole device |
+
+Runtime failure flow:
+
+```text
+measurement timeout / invalid reading / trigger GPIO failure
+      ↓
+parking_slot_mark_error()   (idempotent, remembers pre-error state)
+      ↓
+ESP_LOGE in parking_lot_scan()
+      ↓
+continue scanning other slots
+      ↓
+deterministic recovery on first valid measurement (ADR-0007)
+```
+
+- Exactly three fatal sites exist, all init-time: slot initialization
+  (`initialize_slots` wrapping `parking_slot_init`), task creation (the
+  `xTaskCreate` result checked via `ESP_ERROR_CHECK`), and the scan wrapper in
+  `app_main`'s task (safe because `parking_lot_scan` returns `ESP_OK` even when
+  individual slots error).
+- The driver never aborts: every `ultrasonic_measure_cm` failure path —
+  including a TRIG GPIO that stops accepting writes at runtime — returns an
+  `esp_err_t` code. No retries/backoff inside the driver; recovery is the
+  state machine's job.
+- Watchdog / panic handlers are not configured yet; revisit with networking.
 
 - Measurement validation gates every reading before `parking_slot_update`;
   invalid readings (non-numeric, zero/negative, outside the plausible band)
@@ -128,8 +161,8 @@ ESP-IDF / FreeRTOS
   continues with the other slots.
 - The ultrasonic driver validates arguments, GPIO wiring, and measurement
   plausibility (2–400 cm with the near-floor tolerance), returning
-  `ESP_ERR_TIMEOUT` / `ESP_ERR_INVALID_RESPONSE` / `ESP_ERR_INVALID_ARG`
-  rather than crashing.
+  `ESP_ERR_TIMEOUT` / `ESP_ERR_INVALID_RESPONSE` / `ESP_ERR_INVALID_STATE` /
+  `ESP_ERR_INVALID_ARG` rather than crashing.
 - Sensor init failure is treated as a fatal configuration error
   (`ESP_ERROR_CHECK`).
 

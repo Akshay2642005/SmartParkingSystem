@@ -36,11 +36,14 @@ session:
       named stack size / priority constants; app_main returns after setup)
     - Near-floor tolerance fix (ultrasonic_distance_is_plausible shared by
       driver and parking validator; absorbs us-timing jitter at the 2 cm floor)
+    - Phase 15 — Error handling strategy (policy documented in
+      firmware-architecture § Error Handling Policy; trigger-side GPIO
+      failures surface as recoverable ESP_ERR_INVALID_STATE)
   in_progress:
     - M2 — Sensor Layer hardening (Local Embedded Logic Improvements)
     - Firmware code documentation and spec synchronization
   next:
-    - Phase 15 — Error Handling Strategy
+    - Phase 16 — Logging
     - Verify sensor integration in Wokwi
     - Decide device communication protocol (ADR-0005)
     - Begin M3 — Device Platform
