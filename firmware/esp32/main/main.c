@@ -69,5 +69,6 @@ void app_main(void) {
         NULL,
         PARKING_TASK_PRIORITY,
         NULL);
+
     ESP_ERROR_CHECK(created == pdPASS ? ESP_OK : ESP_FAIL);
 }
