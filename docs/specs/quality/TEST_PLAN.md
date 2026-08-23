@@ -10,7 +10,8 @@ System.
 
 Pure parking-domain logic (state machine, thresholds, debouncing, recovery,
 statistics) is tested on the host — no ESP32, no IDF toolchain, no QEMU
-(`docs/impl` Phase 20). CMake builds five `unit/*` executables whose cases
+(Phase 20 host-test plan; per-phase implementation plans live in `docs/impl`,
+untracked). CMake builds five `unit/*` executables whose cases
 stream Redis-style `[ok]: name (N ms)` lines:
 
 ```sh

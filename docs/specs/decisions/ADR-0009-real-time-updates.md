@@ -1,12 +1,13 @@
 # ADR-0009: Real-Time Updates
 
-Status: Proposed
+Status: Accepted (2026-08-23)
 
 ## Context
 
-The dashboard must reflect parking availability. It is not yet clear whether
-availability must update in real time or whether periodic refresh is sufficient.
-The dashboard is a Next.js starter with no data fetching or update mechanism.
+The dashboard must reflect parking availability. The dashboard is a Next.js
+starter with no data fetching or update mechanism. Device-side transport is
+now decided (`ADR-0005`): MQTT snapshots reach the Rust backend via a broker
+subscription. The remaining hop is backend → browser.
 
 ## Problem
 
@@ -14,47 +15,59 @@ How should the dashboard receive updated parking availability?
 
 ## Decision
 
-**Pending Decision.** Whether real-time updates are required has not been
-determined. If they are required, the mechanism is also undecided. The candidate
-space is recorded here.
+**WebSocket** between the Rust backend and the Next.js dashboard, using a
+snapshot-then-deltas contract:
+
+1. On connect, the backend sends `{type:"snapshot"}` with full current state.
+2. Every accepted device update is fanned out as `{type:"update"}` frames.
+3. Node liveness (MQTT LWT) surfaces as `{type:"node_status"}` frames.
+4. Client→server frames use a reserved `{type:"cmd", ...}` envelope; v1
+   replies with a typed error for any command, but the schema keeps the door
+   open for reserve/gate-control features without a protocol break.
+
+Polling and SSE were considered and rejected.
 
 ## Candidates
 
-- **Polling**: client periodically re-requests availability. Simple; not truly
-  real-time; acceptable for many use cases.
-- **Server-Sent Events (SSE)**: server pushes updates over a single HTTP
-  connection. Simple, one-way, real-time.
-- **WebSockets**: full-duplex persistent connection; real-time both directions;
-  more complex.
-- **Pub/Sub**: (e.g. via the communication layer) decoupled delivery; requires
-  infrastructure.
+- **Polling**: client periodically re-requests availability.
+- **Server-Sent Events (SSE)**: server pushes over one HTTP connection.
+- **WebSockets**: full-duplex persistent connection.
+- **Pub/Sub**: decoupled delivery requiring extra client infrastructure.
 
-## Evaluation Criteria
+## Rationale
 
-- Requirement: does the product require near-immediate updates?
-- Latency: how quickly must a state change reach the dashboard?
-- Complexity: client and server implementation effort.
-- Consistency with the chosen device communication layer (`ADR-0005`).
+- The command direction (reservations, gate control) is a plausible product
+  step; SSE would force a second transport the moment it ships. WebSocket
+  covers both directions with one mechanism.
+- Polling fails the product's core promise: a garage availability board must
+  update within moments, not on a refresh timer, and polling N sections per
+  client scales poorly.
+- A raw pub/sub client in the browser (MQTT-over-WSS) was rejected: it would
+  expose broker credentials to browsers and bypass backend auth/persistence.
 
 ## Consequences
 
 ### Positive
 
-- (TBD once decided.)
+- One uniform real-time story end-to-end (device push → backend fan-out).
+- Command channel exists from day one, even if unused in v1.
+- Snapshot-on-connect makes dashboard refresh/reconnect trivial (no state
+  reconciliation logic in React).
 
 ### Negative
 
-- Dashboard milestone (M5) data layer cannot be finalized until the mechanism is
-  chosen.
+- Backend owns connection management (heartbeats, dead-socket cleanup).
+- Slightly more code than SSE for the read-only case (~a message-type enum).
 
 ## Validation
 
-- The chosen mechanism shall be reflected in `../architecture/backend-architecture.md`
-  and `../architecture/system-architecture.md`.
-- Verified by integration/end-to-end tests (`../quality/TEST_PLAN.md`).
+- Integration test (`../quality/verifications/device-backend.md`): publishing a
+  device snapshot to the broker must produce an `update` frame on an open
+  dashboard WebSocket within 1 s; a fresh connection must receive a correct
+  `snapshot` frame.
 
 ## Related Documents
 
-- `../architecture/backend-architecture.md`
 - `../architecture/communication.md`
-- `../planning/PLAN.md` (M5 — Dashboard)
+- `../decisions/ADR-0005-device-communication.md`
+- `../product/REQUIREMENTS.md`

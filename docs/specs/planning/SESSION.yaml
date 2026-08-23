@@ -54,19 +54,31 @@ session:
       Portable case sources in main/test/ also compile into the firmware;
       `selftest` serial command runs them on-target under FreeRTOS and the
       headless Wokwi scenario confirms the SELFTEST PASSED verdict (20 cases)
+
   in_progress:
     - M2 close-out (PROMPT.md completion-criteria audit)
+
+  decisions:
+    - Decision (2026-08-23) — device-backend protocol, ADR-0005 accepted
+      (MQTT with a site-local Mosquitto broker acting as coordinator; nodes
+      publish retained QoS 1 section snapshots; LWT for node liveness; the
+      Rust backend subscribes via rumqttc; a dedicated gateway service is
+      deliberately deferred). ADR-0009 accepted (backend-to-dashboard
+      WebSocket using snapshot-then-deltas with a reserved command envelope).
+      Wire contract (topics, payload schema v1, seq/idempotency, reconnect
+      policy) defined in architecture/communication.md.
+      Evidence at docs/specs/architecture/communication.md
+
   next:
     - Record PROMPT.md completion-criteria audit in SESSION.yaml (M2 close)
-    - Decide device communication protocol (ADR-0005)
-    - Begin M3 — Device Platform
+    - Begin M3 — Device Platform (broker bring-up on the dev machine; firmware
+      MQTT publisher behind Kconfig; payload builder as a pure, host-tested C
+      function; reconnect/backoff policy per communication.md)
+    - Device identity scheme (ADR-0008)
+    - Backend framework and persistence (ADR-0006)
   blockers:
-    - Communication protocol pending
     - Backend framework / persistence pending
-    - Real-time update mechanism pending
     - Device identity scheme pending
   decisions_pending:
-    - ADR-0005 Device Communication
     - ADR-0006 Backend
     - ADR-0008 Device Identity
-    - ADR-0009 Real-Time Updates

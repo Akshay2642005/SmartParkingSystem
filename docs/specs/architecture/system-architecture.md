@@ -57,7 +57,7 @@ ESP32            (Current — parking state machine)
   ↓
 Device state     (Current — in-memory on device)
   ↓
-Network          (Planned — protocol pending, ADR-0005)
+Network          (Current — MQTT via site broker, ADR-0005)
   ↓
 Backend          (Planned — Rust scaffold only)
   ↓

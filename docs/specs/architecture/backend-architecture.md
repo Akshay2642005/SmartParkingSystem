@@ -50,7 +50,8 @@ Internal services   → state management, persistence
 ### Real-Time Updates
 
 - Push availability changes to the dashboard.
-- Mechanism: Pending Decision (`ADR-0009`).
+- Mechanism: WebSocket, snapshot-then-deltas (`ADR-0009`); the backend also
+  subscribes to the device broker per `ADR-0005`.
 
 ## Current State
 

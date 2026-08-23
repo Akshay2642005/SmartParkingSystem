@@ -64,10 +64,8 @@ in_progress:
   - M2 close-out (completion-criteria audit into SESSION.yaml)
 
 planned:
-  - Device communication protocol (ADR-0005)
   - Device identity (ADR-0008)
   - Backend framework and persistence (ADR-0006)
-  - Real-time update mechanism (ADR-0009)
   - M3 — Device Platform
   - M4 — Backend
   - M5 — Dashboard
