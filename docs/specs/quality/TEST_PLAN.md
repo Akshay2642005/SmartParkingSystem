@@ -14,8 +14,10 @@ statistics) is tested on the host — no ESP32, no IDF toolchain, no QEMU
 stream Redis-style `[ok]: name (N ms)` lines:
 
 ```sh
-make -C firmware/esp32 test   # cmake build + direct execution (Redis-style output)
-ctest                         # same binaries via CTest, e.g. for CI (build dir)
+make -C firmware/esp32 test        # FULL gate: host units + all Wokwi scenarios
+make -C firmware/esp32 test-host   # units only, sub-second inner loop
+ctest                              # same binaries via CTest, e.g. for CI
+                                   # (build tree: firmware/esp32/tests/build)
 ```
 
 - **Scope**: `main/parking/parking.c` + real production config
@@ -38,6 +40,24 @@ ctest                         # same binaries via CTest, e.g. for CI (build dir)
   one constant. Keep the stub in sync when touching the driver.
 - **Responsibility split**: host tests cover decision logic; Wokwi scenarios
   cover timing, GPIO wiring, and the serial pipeline end-to-end.
+
+### Shared case sources, on-target self-test
+
+The classification/debounce/recovery/statistics case bodies live in
+`main/test/cases_*.c` (portable Redis-style framework in
+`main/test/parking_selftest.h`) and are compiled into BOTH the host binaries
+and the production firmware. In the firmware they sit behind
+`CONFIG_PARKING_DEBUG_INJECT`; the debug console's `selftest` serial command
+runs them under FreeRTOS and prints `=== SELFTEST PASSED ===`, verified
+headlessly by `tests/wokwi-scenario-selftest.yaml`:
+
+```sh
+make scenario SCENARIO=tests/wokwi-scenario-selftest.yaml   # on-target run
+```
+
+Release builds never call the units, so linker garbage-collection strips
+them. Only `unit/errors` is host-only — it scripts sensor failures through
+the ultrasonic stub, which real hardware cannot do.
 
 ## Firmware
 

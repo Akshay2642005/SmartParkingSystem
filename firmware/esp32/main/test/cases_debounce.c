@@ -3,8 +3,7 @@
  * parking_settings.h). Each sequence runs against a fresh production slot.
  */
 
-#include "test_fixture.h"
-#include "test_util.h"
+#include "parking_selftest.h"
 
 static void run_sequence(const char* name,
     const float* inputs,
@@ -17,7 +16,8 @@ static void run_sequence(const char* name,
     for (size_t i = 0; i < count; i++) {
         const parking_event_t event = parking_slot_update(&slot, inputs[i]);
         if (event.type != expected_events[i]) {
-            printf("        fail: step %zu (%.1f cm): got event %d, want %d\n",
+            printf("%s: step %zu (%.1f cm): got event %d, want %d\n",
+                paint(COLOR_RED, "[err]"),
                 i + 1,
                 (double)inputs[i],
                 (int)event.type,
@@ -30,7 +30,7 @@ static void run_sequence(const char* name,
     case_end();
 }
 
-int main(void) {
+int selftest_debounce(void) {
     {
         const float inputs[] = {25.0f, 25.0f};
         const parking_event_type_t events[] =

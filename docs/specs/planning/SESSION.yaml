@@ -50,7 +50,10 @@ session:
       sensor-integration verification PASS)
     - Phase 20 — Automated local testing (CMake/CTest host units over the
       pure parking domain with stubbed IDF surface; 27 cases passing;
-      Redis-style [ok] output; make test runner in firmware/esp32 Makefile)
+      Redis-style [ok] output; make test runner in firmware/esp32 Makefile).
+      Portable case sources in main/test/ also compile into the firmware;
+      `selftest` serial command runs them on-target under FreeRTOS and the
+      headless Wokwi scenario confirms the SELFTEST PASSED verdict (20 cases)
   in_progress:
     - M2 close-out (PROMPT.md completion-criteria audit)
   next:

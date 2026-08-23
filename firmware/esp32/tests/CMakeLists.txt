@@ -8,19 +8,32 @@ project(parking_host_tests LANGUAGES C)
 # the ultrasonic driver. No IDF toolchain, no hardware: plain C11 on the
 # host, driven by CTest:
 #
-#   make test                          # from firmware/esp32 — Redis-style output
-#   ctest --test-dir tests/host/build  # same binaries via CTest (CI)
+#   make test                          # from firmware/esp32 — full gate
+#   make test-host                     # units only (Redis-style output, fast)
+#   ctest --test-dir tests/build       # same binaries via CTest (CI)
+#
+# The build tree lives in ./build (tests/build), NOT tracked.
+#
+# The classification/debounce/recovery/statistics case sources live in
+# ../main/test/ so the firmware itself can run them too (`selftest` serial
+# command); unit/errors is host-only — it needs the scripted stub driver.
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(MAIN_DIR ${CMAKE_CURRENT_LIST_DIR}/../../main)
+set(MAIN_DIR ${CMAKE_CURRENT_LIST_DIR}/../main)
 
 add_library(parking_domain STATIC
     ${MAIN_DIR}/parking/parking.c
     ${MAIN_DIR}/parking/parking_config.c
+    ${MAIN_DIR}/test/cases_classification.c
+    ${MAIN_DIR}/test/cases_debounce.c
+    ${MAIN_DIR}/test/cases_recovery.c
+    ${MAIN_DIR}/test/cases_statistics.c
     stubs/ultrasonic_stub.c
 )
+# Host build of the portable framework: colors + clock_gettime timing.
+target_compile_definitions(parking_domain PUBLIC)
 target_include_directories(parking_domain PUBLIC
     ${MAIN_DIR}/parking
     ${MAIN_DIR}/sensors
@@ -37,7 +50,10 @@ set(PARKING_TEST_UNITS classification debounce errors recovery statistics)
 foreach(unit IN LISTS PARKING_TEST_UNITS)
   add_executable(unit_${unit} units/unit_${unit}.c)
   target_link_libraries(unit_${unit} PRIVATE parking_domain)
-  target_include_directories(unit_${unit} PRIVATE ${CMAKE_CURRENT_LIST_DIR})
+  target_include_directories(unit_${unit} PRIVATE
+      ${CMAKE_CURRENT_LIST_DIR}
+      ${MAIN_DIR}/test
+  )
   target_compile_options(unit_${unit} PRIVATE -Wall -Wextra -Werror)
   add_test(NAME unit/${unit} COMMAND unit_${unit})
 endforeach()

@@ -1,0 +1,16 @@
+# On-target parking-domain self-test, driven headlessly through the
+# PARKING_DEBUG_INJECT serial hook (wokwi-cli --scenario).
+#
+# The `selftest` command runs the same portable units as the host suite
+# (`make test`) inside the real firmware — production binary, FreeRTOS,
+# IDF console — and prints a single verdict line that this script waits for.
+name: parking-selftest
+version: 1
+author: Akshay
+steps:
+  - wait-serial: "Initialized 3 parking slots"
+  # Give the debug console task time to install its UART driver — a write
+  # sent before that is silently dropped (bytes never reach uart_read_bytes).
+  - delay: 2s
+  - write-serial: "selftest\n"
+  - wait-serial: "=== SELFTEST PASSED ==="

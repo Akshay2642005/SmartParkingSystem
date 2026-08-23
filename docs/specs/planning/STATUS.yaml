@@ -57,7 +57,8 @@ completed:
   - Phase 20 — Automated local testing (host unit tests built with CMake and
     run by CTest - unit/classification, unit/debounce, unit/errors,
     unit/recovery, unit/statistics; 27 cases passing; make -C firmware/esp32
-    test)
+    test). Shared case sources in main/test/ also run on-target via the
+    debug console `selftest` command; Wokwi scenario confirms PASS
 
 in_progress:
   - M2 close-out (completion-criteria audit into SESSION.yaml)

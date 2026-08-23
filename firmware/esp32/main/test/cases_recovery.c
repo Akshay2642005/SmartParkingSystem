@@ -5,10 +5,9 @@
  * occupancy change emits an event.
  */
 
-#include "test_fixture.h"
-#include "test_util.h"
+#include "parking_selftest.h"
 
-int main(void) {
+int selftest_recovery(void) {
     case_begin("band recovery restores pre-error OCCUPIED silently");
     parking_slot_t slot = make_slot(1);
     force_occupied(&slot);

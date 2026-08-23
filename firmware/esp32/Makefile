@@ -13,8 +13,9 @@
 #   make up          flash + monitor
 #   make menuconfig  Kconfig editor                      (= idf.py menuconfig)
 #   make size        firmware size breakdown             (= idf.py size)
-#   make test        host unit tests (Redis-style [ok] output)
-#   make scenario    headless Wokwi run (debug-injection matrix)
+#   make test        FULL gate: host unit tests + all Wokwi scenarios
+#   make test-host   just the host unit tests (fast inner loop)
+#   make scenario    one headless Wokwi run (SCENARIO=<file>, default matrix)
 #   make clean       wipe both firmware and host-test build directories
 #
 # Override on the command line when needed:
@@ -24,16 +25,24 @@ ESP_IDF  ?= $(HOME)/.espressif/v6.0.2/esp-idf
 PORT     ?= /dev/cu.usbserial-0001
 BAUD     ?= 115200
 SCENARIO ?= tests/wokwi-scenario-injection.yaml
-WOKWI_TIMEOUT ?= 50000
 
-HOST_DIR := tests/host
-HOST_BUILD := $(HOST_DIR)/build
+# wokwi-cli --timeout is in MILLISECONDS.
+WOKWI_TIMEOUT_MS ?= 180000
+
+# Every scenario must pass for `make test` to succeed.
+SCENARIOS := \
+    tests/wokwi-scenario.yaml \
+    tests/wokwi-scenario-injection.yaml \
+    tests/wokwi-scenario-selftest.yaml
+
+HOST_DIR := tests
+HOST_BUILD := tests/build
 BUILD := build
 
 idf := . $(ESP_IDF)/export.sh >/dev/null && idf.py
 
 .DEFAULT_GOAL := build
-.PHONY: configure build flash monitor up menuconfig size test scenario clean
+.PHONY: configure build flash monitor up menuconfig size test test-host scenario clean
 
 # One-shot full reconfigure; also the bootstrap for a fresh clone.
 configure:
@@ -70,9 +79,9 @@ menuconfig:
 size:
 	@$(idf) size
 
-# Host-side parking-domain tests: real production sources compiled against
-# stub drivers. Streams Redis-style output; exits non-zero on any failure.
-test:
+# Fast inner loop: host-side parking-domain units only — production sources
+# compiled against stub drivers, Redis-style output, sub-second, no hardware.
+test-host:
 	@cmake -S $(HOST_DIR) -B $(HOST_BUILD) >/dev/null
 	@cmake --build $(HOST_BUILD) >/dev/null
 	@echo "==> Running parking host tests"
@@ -87,8 +96,27 @@ test:
 	    exit 1; \
 	fi
 
+# Full gate: host units first (fail fast), then every Wokwi scenario
+# headlessly. Scenario serial output goes to a log under /tmp so the console
+# stays readable; on failure the tail is shown for debugging.
+test: test-host
+	@for scenario in $(SCENARIOS); do \
+	    name=$${scenario##*/}; \
+	    log=/tmp/wokwi-$$name.log; \
+	    echo "==> Wokwi $$name"; \
+	    if wokwi-cli --scenario $$scenario --timeout $(WOKWI_TIMEOUT_MS) \
+	        > $$log 2>&1; then \
+	        echo "==> $$name PASSED"; \
+	    else \
+	        echo "!!! $$name FAILED (log: $$log)"; \
+	        tail -15 $$log; \
+	        exit 1; \
+	    fi; \
+	done
+	@echo "==> All parking tests passed"
+
 scenario:
-	@wokwi-cli --scenario $(SCENARIO) --timeout $(WOKWI_TIMEOUT)
+	@wokwi-cli --scenario $(SCENARIO) --timeout $(WOKWI_TIMEOUT_MS)
 
 clean:
 	@rm -rf $(HOST_BUILD)

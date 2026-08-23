@@ -2,13 +2,13 @@
  * Unit: errors — invalid-measurement rejection and scan-path error handling
  * (FR-012: invalid readings -> ERROR, never silently FREE/OCCUPIED).
  *
- * These cases run through parking_lot_scan() so validation, error marking,
- * and statistics are exercised together, with the stub driver scripting the
- * sensor outcomes.
+ * HOST-ONLY: these cases need the scripted ultrasonic stub to force sensor
+ * failures, which cannot exist on the real hardware. They run through
+ * parking_lot_scan() so validation, error marking, and statistics are
+ * exercised together.
  */
 
-#include "test_fixture.h"
-#include "test_util.h"
+#include "parking_selftest.h"
 #include "ultrasonic_stub.h"
 
 static parking_lot_t lot;

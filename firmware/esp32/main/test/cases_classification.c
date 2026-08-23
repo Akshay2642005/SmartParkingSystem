@@ -3,13 +3,12 @@
  *
  * Exercises parking_slot_update() against the production thresholds
  * (occupied <= 30 cm, free >= 35 cm, band (30, 35) ambiguous).
- * Matrix rows: PROMPT.md Phase 20 lines 845–852.
+ * Matrix rows: PROMPT.md Phase 20 lines 845-852.
  */
 
-#include "test_fixture.h"
-#include "test_util.h"
+#include "parking_selftest.h"
 
-int main(void) {
+int selftest_classification(void) {
     parking_slot_t slot = make_slot(1);
 
     case_begin("fresh slot starts FREE");

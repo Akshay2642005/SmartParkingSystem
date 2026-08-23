@@ -3,13 +3,11 @@
  * invariant, and the query API's documented NULL conventions.
  */
 
-#include <stdio.h>
 #include <string.h>
 
-#include "test_fixture.h"
-#include "test_util.h"
+#include "parking_selftest.h"
 
-int main(void) {
+int selftest_statistics(void) {
     case_begin("mixed states produce correct counters");
     parking_lot_t lot;
     parking_slot_t slots[3];

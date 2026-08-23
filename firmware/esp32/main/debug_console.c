@@ -11,15 +11,17 @@
 #include "debug_console.h"
 #include "parking.h"
 #include "parking_config.h"
+#include "parking_selftest.h"
 
 #if CONFIG_PARKING_DEBUG_INJECT
 
 /**
- * Debug console (debug builds only): reads "setdist <slot-id> <cm>" lines
- * from UART0 and queues them as one-shot measurement injections for the next
- * parking_lot_scan() of the given slot. Exists solely so wokwi-cli scenarios
- * can drive occupancy/error paths headlessly via write-serial; production
- * builds compile this file out entirely.
+ * Debug console (debug builds only): reads commands from UART0.
+ *   setdist <slot-id> <cm>   inject a raw distance for slot's next scan
+ *   selftest                 run the portable parking-domain units
+ * Exists solely so wokwi-cli scenarios can drive occupancy/error paths and
+ * the self-test headlessly via write-serial; production builds compile this
+ * file out entirely.
  */
 
 static const char* TAG = "dbg_console";
@@ -27,11 +29,52 @@ static const char* TAG = "dbg_console";
 /** UART the IDF console runs on; matches the Wokwi serial monitor wiring. */
 #define DEBUG_CONSOLE_UART UART_NUM_0
 
+/** Portable units also compiled into the host test suite (make test). */
+static const struct {
+    const char* name;
+    int (*run)(void);
+} SELFTEST_UNITS[] = {
+    {"classification", selftest_classification},
+    {"debounce", selftest_debounce},
+    {"recovery", selftest_recovery},
+    {"statistics", selftest_statistics},
+};
+
+/**
+ * Run every portable unit in-line and print a single verdict line that
+ * wokwi scenarios can wait for. Blocks the console task for the duration
+ * (the units are pure CPU, sub-millisecond per case).
+ */
+static void run_selftest(void) {
+    printf("==> Running on-target parking self-test\n");
+
+    int failed_units = 0;
+    for (size_t i = 0; i < sizeof(SELFTEST_UNITS) / sizeof(SELFTEST_UNITS[0]);
+        i++) {
+        printf("Testing unit/%s\n", SELFTEST_UNITS[i].name);
+        if (SELFTEST_UNITS[i].run() != 0) {
+            failed_units++;
+        }
+    }
+
+    if (failed_units == 0) {
+        printf("\n=== SELFTEST PASSED ===\n");
+    } else {
+        printf("\n!!! SELFTEST FAILED (%d unit(s))\n", failed_units);
+    }
+}
+
 /**
  * Parse and apply one command line. Supported:
  *   setdist <slot-id> <cm>   inject a raw distance for slot's next scan
+ *   selftest                 run the on-target parking domain units
  */
 static void handle_line(const char* line) {
+    if (strcmp(line, "selftest") == 0) {
+        run_selftest();
+        return;
+    }
+
     unsigned slot_id = 0;
     float cm = 0.0f;
 
@@ -87,8 +130,10 @@ static void debug_console_task(void* arg) {
 }
 
 void debug_console_start(void) {
+    /* 4 KiB: the self-test path formats printf output on top of the usual
+     * command handling, so give it more headroom than plain setdist needs. */
     BaseType_t created =
-        xTaskCreate(debug_console_task, "dbg_console", 3072, NULL, 3, NULL);
+        xTaskCreate(debug_console_task, "dbg_console", 4096, NULL, 3, NULL);
     ESP_ERROR_CHECK(created == pdPASS ? ESP_OK : ESP_FAIL);
 }
 
