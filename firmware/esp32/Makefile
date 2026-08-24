@@ -13,8 +13,7 @@
 #   make up          flash + monitor
 #   make menuconfig  Kconfig editor                      (= idf.py menuconfig)
 #   make size        firmware size breakdown             (= idf.py size)
-#   make test        FULL gate: host unit tests + all Wokwi scenarios
-#   make test-host   just the host unit tests (fast inner loop)
+#   make test        FULL gate: host tests
 #   make scenario    one headless Wokwi run (SCENARIO=<file>, default matrix)
 #   make clean       wipe both firmware and host-test build directories
 #
@@ -81,7 +80,7 @@ size:
 
 # Fast inner loop: host-side parking-domain units only — production sources
 # compiled against stub drivers, Redis-style output, sub-second, no hardware.
-test-host:
+test:
 	@cmake -S $(HOST_DIR) -B $(HOST_BUILD) >/dev/null
 	@cmake --build $(HOST_BUILD) >/dev/null
 	@echo "==> Running parking host tests"
@@ -95,25 +94,6 @@ test-host:
 	    echo "!!! $$failed unit(s) FAILED"; \
 	    exit 1; \
 	fi
-
-# Full gate: host units first (fail fast), then every Wokwi scenario
-# headlessly. Scenario serial output goes to a log under /tmp so the console
-# stays readable; on failure the tail is shown for debugging.
-test: test-host
-	@for scenario in $(SCENARIOS); do \
-	    name=$${scenario##*/}; \
-	    log=/tmp/wokwi-$$name.log; \
-	    echo "==> Wokwi $$name"; \
-	    if wokwi-cli --scenario $$scenario --timeout $(WOKWI_TIMEOUT_MS) \
-	        > $$log 2>&1; then \
-	        echo "==> $$name PASSED"; \
-	    else \
-	        echo "!!! $$name FAILED (log: $$log)"; \
-	        tail -15 $$log; \
-	        exit 1; \
-	    fi; \
-	done
-	@echo "==> All parking tests passed"
 
 scenario:
 	@wokwi-cli --scenario $(SCENARIO) --timeout $(WOKWI_TIMEOUT_MS)

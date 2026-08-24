@@ -54,6 +54,12 @@ session:
       Portable case sources in main/test/ also compile into the firmware;
       `selftest` serial command runs them on-target under FreeRTOS and the
       headless Wokwi scenario confirms the SELFTEST PASSED verdict (20 cases)
+    - Phase 21 — MQTT payload builder (pure protocol v1 JSON encoder in
+      main/mqtt, host-tested as unit/payload with a byte-exact golden
+      snapshot, lowercase wire vocabulary translated from the serial
+      vocabulary via an exhaustive switch; 33 host cases green). Wire
+      contract state list corrected to free|occupied|error in
+      architecture/communication.md.
 
   in_progress:
     - M2 close-out (PROMPT.md completion-criteria audit)

@@ -30,6 +30,8 @@ add_library(parking_domain STATIC
     ${MAIN_DIR}/test/cases_debounce.c
     ${MAIN_DIR}/test/cases_recovery.c
     ${MAIN_DIR}/test/cases_statistics.c
+    ${MAIN_DIR}/test/cases_payload.c
+    ${MAIN_DIR}/mqtt/parking_payload.c
     stubs/ultrasonic_stub.c
 )
 # Host build of the portable framework: colors + clock_gettime timing.
@@ -37,6 +39,7 @@ target_compile_definitions(parking_domain PUBLIC)
 target_include_directories(parking_domain PUBLIC
     ${MAIN_DIR}/parking
     ${MAIN_DIR}/sensors
+    ${MAIN_DIR}/mqtt
     ${CMAKE_CURRENT_LIST_DIR}/stubs
 )
 # CONFIG_PARKING_DEBUG_INJECT is intentionally undefined here: the debug
@@ -45,7 +48,7 @@ target_compile_options(parking_domain PRIVATE -Wall -Wextra -Werror)
 
 enable_testing()
 
-set(PARKING_TEST_UNITS classification debounce errors recovery statistics)
+set(PARKING_TEST_UNITS classification debounce errors payload recovery statistics)
 
 foreach(unit IN LISTS PARKING_TEST_UNITS)
   add_executable(unit_${unit} units/unit_${unit}.c)

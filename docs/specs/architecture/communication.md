@@ -80,11 +80,12 @@ Field rules:
 | `seq`        | Per-node monotonically increasing counter (wraps at 2^32−1)    |
 | `section`    | Section identifier, must match the topic segment               |
 | `slots[].id` | Full slot label including section prefix (`A-1`)               |
-| `state`      | Exactly one of `free`, `occupied`, `unknown`, `error`          |
+| `state`      | Exactly one of `free`, `occupied`, `error`                     |
 | `changed_ms` | Uptime (ms) of the last observed transition for that slot      |
 
-- States reuse the firmware vocabulary verbatim (`free|occupied|unknown|error`);
-  no translation layer exists anywhere in the chain.
+- States use lowercase protocol tokens (`free|occupied|error`) — the same three
+  values as the firmware's `parking_state_t`, translated from the uppercase
+  serial vocabulary by an exhaustive mapping pinned by unit/payload tests.
 - Snapshots are complete (all four slots every time), never deltas — consumers
   can apply them blindly.
 - Publish cadence: on change (debounced by the firmware's existing debounce

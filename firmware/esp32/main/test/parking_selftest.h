@@ -183,5 +183,6 @@ __attribute__((unused)) static inline void force_free(parking_slot_t* slot) {
 
 int selftest_classification(void);
 int selftest_debounce(void);
+int selftest_payload(void);
 int selftest_recovery(void);
 int selftest_statistics(void);

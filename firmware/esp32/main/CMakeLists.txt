@@ -13,6 +13,7 @@ idf_component_register(
     "sensors/ultrasonic.c"
     "parking/parking.c"
     "parking/parking_config.c"
+    "mqtt/parking_payload.c"
     "test/cases_classification.c"
     "test/cases_debounce.c"
     "test/cases_recovery.c"
@@ -21,6 +22,7 @@ idf_component_register(
     ""
     "sensors"
     "parking"
+    "mqtt"
     "test"
   PRIV_REQUIRES
     esp_driver_gpio
