@@ -2,7 +2,7 @@ project:
   name: Smart Parking System
   status: active
 
-current_phase: M2
+current_phase: M3
 
 completed:
   - ESP-IDF project initialized
@@ -63,14 +63,20 @@ completed:
     main/mqtt, byte-exact golden snapshot, host-tested; 33 host cases)
   - Phase 22 — MQTT client integration (wifi_sta blocking connect with
     explicit esp_wifi_connect on STA_START; mqtt_publisher task over the
-    espressif/mqtt managed component: retained online/offline LWT lifecycle,
+    espressif/mqtt managed component - retained online/offline LWT lifecycle,
     transition-driven snapshots plus 30 s refresh, Kconfig-gated so =n builds
     shrink to 0x2bba0. Verified end-to-end in Wokwi via local wokwigw bridge
     to a public broker - all scenario transitions observed as seq-incrementing
     snapshots)
+  - M2 close-out — PROMPT.md completion-criteria audit PASS (all 17 local
+    subsystem criteria evidenced in verifications/m2-completion-criteria.md)
+  - Phase 23 — Backend MQTT ingest (rumqttc subscriber validating protocol
+    v1 into an in-memory per-(site,section) store with axum debug endpoint;
+    stale-seq guard plus offline-driven session reset, slot count learned
+    per deployment; 14 unit cases + live broker drill PASS in
+    verifications/device-backend.md)
 
-in_progress:
-  - M2 close-out (completion-criteria audit into SESSION.yaml)
+in_progress: []
 
 planned:
   - Device identity (ADR-0008)

@@ -17,6 +17,7 @@ set(MAIN_SRCS
 		"net/wifi_sta.c"
 		"test/cases_classification.c"
 		"test/cases_debounce.c"
+		"test/cases_payload.c"
 		"test/cases_recovery.c"
 		"test/cases_statistics.c"
 )

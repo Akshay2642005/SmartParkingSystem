@@ -1,6 +1,7 @@
 session:
-  current_goal: Complete M2 — Sensor Layer verification and firmware hardening.
-  current_phase: M2
+  current_goal: M3 — Device Platform (identity ADR, per-node credentials,
+    backend decision records ADR-0006).
+  current_phase: M3
   completed:
     - M0 — Specification baseline
     - M1 — ESP32 Foundation (firmware boots, clean build, Wokwi)
@@ -65,14 +66,29 @@ session:
       online/offline LWT lifecycle, transition snapshots + 30 s refresh,
       QoS 1 no send-retries per contract; Kconfig-gated, =n build clean at
       0x2bba0 with publisher compiled out). E2E verified in Wokwi through a
-      local wokwigw bridge to broker.emqx.io: every scenario transition seen
+      local wokwigw bridge to broker.emqx.io - every scenario transition seen
       as a seq-incrementing retained snapshot; teardown LWT offline observed.
       Key lessons recorded in docs/impl/firmware/PHASE-22 (esp_netif handle
       vs esp_err_t; IDF requires explicit esp_wifi_connect on STA_START;
       wokwigw enables hardware-free MQTT testing).
+    - M2 close-out — PROMPT.md completion-criteria audit PASS (2026-08-25).
+      All 17 PROMPT.md local-subsystem criteria mapped to implementation,
+      test, and doc evidence in
+      docs/specs/quality/verifications/m2-completion-criteria.md. The M2
+      milestone gate is closed; networking work (Phases 21-22) proceeded
+      only after the local subsystem criteria were met.
+    - Phase 23 — Backend MQTT ingest (server/parking-server - rumqttc
+      subscriber, validation into per-(site,section) store, axum
+      /internal/state debug endpoint). Review corrections recorded in
+      docs/impl/server/PHASE-23 - slot count learned not hardcoded,
+      unknown removed from SlotState, slots[].id/changed_ms required,
+      retained offline resets the stale baseline (contract amendment in
+      communication.md § Message Ordering), status topics dispatched not
+      warn-rejected, serde syntax-vs-schema classification. Gates - 14/14
+      cargo tests, clippy/fmt clean, firmware build + 34/34 host cases.
+      Live drill PASS - verifications/device-backend.md.
 
-  in_progress:
-    - M2 close-out (PROMPT.md completion-criteria audit)
+  in_progress: []
 
   decisions:
     - Decision (2026-08-23) — device-backend protocol, ADR-0005 accepted
@@ -86,11 +102,11 @@ session:
       Evidence at docs/specs/architecture/communication.md
 
   next:
-    - Record PROMPT.md completion-criteria audit in SESSION.yaml (M2 close)
     - M3 — Device Platform close-out (broker bring-up done via local
-      mosquitto + public EMQX; firmware MQTT publisher, payload builder and
-      reconnect policy all landed in Phases 21-22; remaining: per-node
-      credentials once a second node exists, watchdog/recovery review)
+      mosquitto + public EMQX; firmware MQTT publisher, payload builder,
+      backend ingest and reconnect policy all landed in Phases 21-23;
+      remaining work is per-node credentials once a second node exists,
+      watchdog/recovery review)
     - Device identity scheme (ADR-0008)
     - Backend framework and persistence (ADR-0006)
   blockers:

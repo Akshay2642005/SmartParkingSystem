@@ -36,6 +36,7 @@ static const struct {
 } SELFTEST_UNITS[] = {
     {"classification", selftest_classification},
     {"debounce", selftest_debounce},
+    {"payload", selftest_payload},
     {"recovery", selftest_recovery},
     {"statistics", selftest_statistics},
 };

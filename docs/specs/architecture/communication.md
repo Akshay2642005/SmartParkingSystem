@@ -1,7 +1,8 @@
 # Device Communication
 
-Status: **Implemented (device side)** — firmware publishes per the contract
-as of Phase 22; backend subscription lands with M4 (`ADR-0006`).
+Status: **Implemented (device + backend ingest)** — firmware publishes and
+the Rust backend subscribes/validates as of Phases 22-23; dashboard
+WebSocket fan-out lands with M5 (`ADR-0009`).
 
 This document defines the device-to-backend communication contract: ESP32
 section nodes publish occupancy over MQTT to a site-local broker; the Rust
@@ -105,6 +106,12 @@ message exists in v1. Broker-side keepalive interval: 30 s.
 - After reconnects or broker loss, ordering guarantees reset — recovered via
   retained state plus `seq`: a consumer seeing `seq` ≤ the last applied value
   for that section discards the message as stale.
+- **Session reset**: a device reboot restarts `seq` at 1, so consumers MUST
+  clear their stale baseline when the node's retained `status` → `offline`
+  arrives (that is the liveness channel's second job). A retained `online`
+  alone does not reset anything. Slot count per section is learned from the
+  first accepted snapshot and enforced thereafter (deployment property, not
+  a protocol constant).
 
 ## Idempotency
 
