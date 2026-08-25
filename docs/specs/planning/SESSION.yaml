@@ -60,6 +60,16 @@ session:
       vocabulary via an exhaustive switch; 33 host cases green). Wire
       contract state list corrected to free|occupied|error in
       architecture/communication.md.
+    - Phase 22 — MQTT client integration (net/wifi_sta.c blocking connect +
+      mqtt/mqtt_publisher.c task over espressif/mqtt 1.1.0; retained
+      online/offline LWT lifecycle, transition snapshots + 30 s refresh,
+      QoS 1 no send-retries per contract; Kconfig-gated, =n build clean at
+      0x2bba0 with publisher compiled out). E2E verified in Wokwi through a
+      local wokwigw bridge to broker.emqx.io: every scenario transition seen
+      as a seq-incrementing retained snapshot; teardown LWT offline observed.
+      Key lessons recorded in docs/impl/firmware/PHASE-22 (esp_netif handle
+      vs esp_err_t; IDF requires explicit esp_wifi_connect on STA_START;
+      wokwigw enables hardware-free MQTT testing).
 
   in_progress:
     - M2 close-out (PROMPT.md completion-criteria audit)
@@ -77,9 +87,10 @@ session:
 
   next:
     - Record PROMPT.md completion-criteria audit in SESSION.yaml (M2 close)
-    - Begin M3 — Device Platform (broker bring-up on the dev machine; firmware
-      MQTT publisher behind Kconfig; payload builder as a pure, host-tested C
-      function; reconnect/backoff policy per communication.md)
+    - M3 — Device Platform close-out (broker bring-up done via local
+      mosquitto + public EMQX; firmware MQTT publisher, payload builder and
+      reconnect policy all landed in Phases 21-22; remaining: per-node
+      credentials once a second node exists, watchdog/recovery review)
     - Device identity scheme (ADR-0008)
     - Backend framework and persistence (ADR-0006)
   blockers:

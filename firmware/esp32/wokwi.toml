@@ -5,3 +5,9 @@ version = 1
 firmware = 'build/flasher_args.json'
 elf = 'build/smart_parking.elf'
 gdbServerPort = 3333
+
+# Self-hosted Wokwi IoT Gateway (wokwigw) - bridges the simulated WiFi to
+# this machine's network. Run it with:
+#   /tmp/wokwigw-bin/wokwigw-darwin_arm64 --listenPort 9011
+# Expect "Client connected" in its output when the simulation starts, and
+# IP 10.13.37.2 on the ESP32.

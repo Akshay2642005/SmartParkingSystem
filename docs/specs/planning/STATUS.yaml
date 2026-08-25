@@ -59,6 +59,15 @@ completed:
     unit/recovery, unit/statistics; 27 cases passing; make -C firmware/esp32
     test). Shared case sources in main/test/ also run on-target via the
     debug console `selftest` command; Wokwi scenario confirms PASS
+  - Phase 21 — MQTT payload builder (pure protocol v1 JSON encoder in
+    main/mqtt, byte-exact golden snapshot, host-tested; 33 host cases)
+  - Phase 22 — MQTT client integration (wifi_sta blocking connect with
+    explicit esp_wifi_connect on STA_START; mqtt_publisher task over the
+    espressif/mqtt managed component: retained online/offline LWT lifecycle,
+    transition-driven snapshots plus 30 s refresh, Kconfig-gated so =n builds
+    shrink to 0x2bba0. Verified end-to-end in Wokwi via local wokwigw bridge
+    to a public broker - all scenario transitions observed as seq-incrementing
+    snapshots)
 
 in_progress:
   - M2 close-out (completion-criteria audit into SESSION.yaml)

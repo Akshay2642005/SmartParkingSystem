@@ -1,6 +1,7 @@
 # Device Communication
 
-Status: **Defined** (MQTT — see `ADR-0005`)
+Status: **Implemented (device side)** — firmware publishes per the contract
+as of Phase 22; backend subscription lands with M4 (`ADR-0006`).
 
 This document defines the device-to-backend communication contract: ESP32
 section nodes publish occupancy over MQTT to a site-local broker; the Rust

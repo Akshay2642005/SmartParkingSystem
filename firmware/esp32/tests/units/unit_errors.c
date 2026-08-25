@@ -14,6 +14,18 @@
 static parking_lot_t lot;
 static parking_slot_t slots[PARKING_SLOT_COUNT];
 
+/* Observer collector for the transition-notification case. */
+static parking_transition_t seen[8];
+static size_t seen_count;
+
+static void collect_transition(const parking_transition_t* t, void* ctx) {
+    (void)ctx;
+
+    if (seen_count < sizeof(seen) / sizeof(seen[0])) {
+        seen[seen_count++] = *t;
+    }
+}
+
 /** Build an n-slot lot from the production config table. */
 static void make_lot(size_t n) {
     stub_measure_reset();
@@ -82,6 +94,45 @@ int main(void) {
 
     case_begin("scan rejects a NULL lot");
     CHECK(parking_lot_scan(NULL) == ESP_ERR_INVALID_ARG);
+    case_end();
+
+    case_begin("scan notifies observers of every committed transition");
+    {
+        seen_count = 0;
+        make_lot(2);
+
+        parking_set_event_observer(collect_transition, NULL);
+
+        const float occupied_cm = slots[0].config.occupied_threshold_cm - 5.0f;
+        const float free_cm = slots[1].config.free_threshold_cm + 5.0f;
+
+        /* Two scans confirm slot 1 -> OCCUPIED; slot 2 stays FREE (silent).
+         * Each scan consumes one reading per slot, in slot order. */
+        stub_measure_push_ok(occupied_cm);
+        stub_measure_push_ok(free_cm);
+        stub_measure_push_ok(occupied_cm);
+        stub_measure_push_ok(free_cm);
+        CHECK(parking_lot_scan(&lot) == ESP_OK);
+        CHECK(parking_lot_scan(&lot) == ESP_OK);
+        CHECK(seen_count == 1); /* second confirmation must NOT re-notify */
+        CHECK(seen[0].slot_number == 1 && seen[0].state == PARKING_OCCUPIED);
+
+        /* Slot 1 sensor dies: ERROR is a committed transition too. */
+        stub_measure_push_error(ESP_ERR_TIMEOUT);
+        stub_measure_push_ok(free_cm);
+        CHECK(parking_lot_scan(&lot) == ESP_OK);
+        CHECK(seen_count == 2);
+        CHECK(seen[1].slot_number == 1 && seen[1].state == PARKING_ERROR);
+
+        /* One valid reading recovers immediately to the pre-error state. */
+        stub_measure_push_ok(occupied_cm);
+        stub_measure_push_ok(free_cm);
+        CHECK(parking_lot_scan(&lot) == ESP_OK);
+        CHECK(seen_count == 3);
+        CHECK(seen[2].slot_number == 1 && seen[2].state == PARKING_OCCUPIED);
+
+        parking_set_event_observer(NULL, NULL);
+    }
     case_end();
 
     return test_summary("unit/errors");

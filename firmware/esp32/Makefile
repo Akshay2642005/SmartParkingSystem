@@ -16,6 +16,7 @@
 #   make test        FULL gate: host tests
 #   make scenario    one headless Wokwi run (SCENARIO=<file>, default matrix)
 #   make clean       wipe both firmware and host-test build directories
+#   make env 				 source esp-id env
 #
 # Override on the command line when needed:
 #   make ESP_IDF=~/.espressif/v9.9.9/esp-idf flash PORT=/dev/cu.usbmodemX
@@ -41,7 +42,7 @@ BUILD := build
 idf := . $(ESP_IDF)/export.sh >/dev/null && idf.py
 
 .DEFAULT_GOAL := build
-.PHONY: configure build flash monitor up menuconfig size test test-host scenario clean
+.PHONY: configure build flash monitor up menuconfig size test test-host scenario clean env
 
 # One-shot full reconfigure; also the bootstrap for a fresh clone.
 configure:
@@ -95,9 +96,23 @@ test:
 	    exit 1; \
 	fi
 
+# Optional Wokwi Private IoT Gateway key: wokwi-cli sims have no network
+# access without one. Set via env when a broker test needs real WiFi:
+#   make scenario WOKWI_GATEWAY_KEY=$(WOKWI_IOT_GATEWAY_KEY)
+WOKWI_GATEWAY_KEY ?=
+
 scenario:
-	@wokwi-cli --scenario $(SCENARIO) --timeout $(WOKWI_TIMEOUT_MS)
+	@if [ -n "$(WOKWI_GATEWAY_KEY)" ]; then \
+		wokwi-cli --scenario $(SCENARIO) --timeout $(WOKWI_TIMEOUT_MS) \
+			--gateway-key "$(WOKWI_GATEWAY_KEY)"; \
+	else \
+		wokwi-cli --scenario $(SCENARIO) --timeout $(WOKWI_TIMEOUT_MS); \
+	fi
 
 clean:
 	@rm -rf $(HOST_BUILD)
 	@rm -rf $(BUILD)
+
+env:
+	@source ~/.espressif/tools/activate_idf_v6.0.2.sh
+

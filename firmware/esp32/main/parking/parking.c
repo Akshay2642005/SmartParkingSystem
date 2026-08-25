@@ -17,18 +17,42 @@
  * E sensor/reading failures - W recovery/unusual - I events+summary - D measurements. */
 static const char* TAG = "parking";
 
-#if CONFIG_PARKING_DEBUG_INJECT
-/** Queued debug injections for the next scan, per slot index (see parking.h). */
-static float s_debug_distance[PARKING_SLOT_COUNT];
-static bool s_debug_has_distance[PARKING_SLOT_COUNT];
+/* Transition observer (telemetry seam, see parking.h). Runs in the parking
+ * task context; NULL until a consumer registers. */
+static parking_transition_observer_t s_observer;
+static void* s_observer_ctx;
 
-esp_err_t parking_debug_inject_distance(size_t slot_index, float distance_cm) {
-    if (slot_index >= PARKING_SLOT_COUNT) {
+void parking_set_event_observer(parking_transition_observer_t observer, void* ctx) {
+    s_observer = observer;
+    s_observer_ctx = ctx;
+}
+
+/** Fire the observer iff this scan committed a state change for the slot. */
+static void notify_transition(const parking_slot_t* slot, parking_state_t previous) {
+    if (s_observer == NULL || slot->state == previous) {
+        return;
+    }
+
+    const parking_transition_t transition = {
+        .slot_number = slot->config.id,
+        .state = slot->state,
+    };
+
+    s_observer(&transition, s_observer_ctx);
+}
+
+#if CONFIG_PARKING_DEBUG_INJECT
+/** Queued debug injections for the next scan(s), per slot index (see parking.h). */
+static float s_debug_distance[PARKING_SLOT_COUNT];
+static uint8_t s_debug_remaining[PARKING_SLOT_COUNT];
+
+esp_err_t parking_debug_inject_distance(size_t slot_index, float distance_cm, uint8_t times) {
+    if (slot_index >= PARKING_SLOT_COUNT || times == 0) {
         return ESP_ERR_INVALID_ARG;
     }
 
     s_debug_distance[slot_index] = distance_cm;
-    s_debug_has_distance[slot_index] = true;
+    s_debug_remaining[slot_index] = times;
 
     return ESP_OK;
 }
@@ -302,17 +326,20 @@ esp_err_t parking_lot_scan(parking_lot_t* lot) {
 
 #if CONFIG_PARKING_DEBUG_INJECT
     for (size_t i = 0; i < lot->slot_count && i < PARKING_SLOT_COUNT; i++) {
-        if (s_debug_has_distance[i]) {
+        if (s_debug_remaining[i] > 0) {
             ESP_LOGI(TAG,
-                "Slot %d | Debug inject: %.2f cm",
+                "Slot %d | Debug inject: %.2f cm (%u scan%s left)",
                 lot->slots[i].config.id,
-                (double)s_debug_distance[i]);
+                (double)s_debug_distance[i],
+                s_debug_remaining[i],
+                s_debug_remaining[i] == 1 ? "" : "s");
         }
     }
 #endif
 
     for (size_t i = 0; i < lot->slot_count; i++) {
         parking_slot_t* slot = &lot->slots[i];
+        const parking_state_t state_before_scan = slot->state;
         float distance_cm;
 
         esp_err_t result = ultrasonic_measure_cm(&slot->sensor, &distance_cm);
@@ -321,9 +348,9 @@ esp_err_t parking_lot_scan(parking_lot_t* lot) {
         // Debug hook: a queued injection replaces the sensor reading for this
         // scan only, then flows through the normal validate -> filter ->
         // debounce pipeline (including rejection when implausible).
-        if (i < PARKING_SLOT_COUNT && s_debug_has_distance[i]) {
+        if (i < PARKING_SLOT_COUNT && s_debug_remaining[i] > 0) {
             distance_cm = s_debug_distance[i];
-            s_debug_has_distance[i] = false;
+            s_debug_remaining[i]--;
             result = ESP_OK;
         }
 #endif
@@ -332,6 +359,7 @@ esp_err_t parking_lot_scan(parking_lot_t* lot) {
             // Recoverable runtime error: mark the slot and keep scanning the rest.
             parking_slot_mark_error(slot);
             ESP_LOGE(TAG, "Slot %d | Sensor error: %s", slot->config.id, esp_err_to_name(result));
+            notify_transition(slot, state_before_scan);
             continue;
         }
 
@@ -339,6 +367,7 @@ esp_err_t parking_lot_scan(parking_lot_t* lot) {
             // Defense-in-depth: never feed invalid data into the state machine.
             parking_slot_mark_error(slot);
             ESP_LOGE(TAG, "Slot %d | Invalid measurement: %.2f cm", slot->config.id, distance_cm);
+            notify_transition(slot, state_before_scan);
             continue;
         }
 
@@ -366,6 +395,8 @@ esp_err_t parking_lot_scan(parking_lot_t* lot) {
             distance_cm,
             slot->filtered_distance_cm,
             parking_state_to_string(slot->state));
+
+        notify_transition(slot, state_before_scan);
     }
 
     parking_lot_update_counts(lot);

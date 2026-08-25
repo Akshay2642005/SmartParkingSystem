@@ -191,6 +191,29 @@ float parking_slot_get_distance_cm(const parking_slot_t* slot);
 /** @return Human-readable name for a parking state. */
 const char* parking_state_to_string(parking_state_t state);
 
+/**
+ * Committed-state-change notification for out-of-domain consumers
+ * (telemetry). Covers every transition the scan loop commits, including
+ * ERROR enter/exit, which produce no occupancy events (ADR-0007).
+ *
+ * Concurrency: callbacks execute in the parking task context immediately
+ * after a transition commits — observers must be non-blocking (queue or
+ * copy) and must not call back into the domain.
+ */
+typedef struct {
+    uint8_t slot_number;   /**< Slot identifier (from config, 1-based). */
+    parking_state_t state; /**< State committed by this transition. */
+} parking_transition_t;
+
+/** Observer callback type; @p ctx is the opaque pointer given at registration. */
+typedef void (*parking_transition_observer_t)(const parking_transition_t* transition, void* ctx);
+
+/**
+ * Register (or clear, with NULL) the single transition observer. Intended to
+ * be called once during startup, before the parking task starts scanning.
+ */
+void parking_set_event_observer(parking_transition_observer_t observer, void* ctx);
+
 #if CONFIG_PARKING_DEBUG_INJECT
 /**
  * Test hook (debug builds only, CONFIG_PARKING_DEBUG_INJECT): queue a raw
@@ -203,7 +226,11 @@ const char* parking_state_to_string(parking_state_t state);
  *
  * @param slot_index  0-based slot position; must be < PARKING_SLOT_COUNT.
  * @param distance_cm Value to inject (may be deliberately invalid, e.g. NaN).
- * @return ESP_OK, or ESP_ERR_INVALID_ARG if @p slot_index is out of range.
+ * @param times       How many consecutive scans consume the injection; must
+ *                    exceed the debounce confirmation count to commit a
+ *                    transition when real sensors disagree in between.
+ * @return ESP_OK, or ESP_ERR_INVALID_ARG if @p slot_index is out of range or
+ *         @p times is zero.
  */
-esp_err_t parking_debug_inject_distance(size_t slot_index, float distance_cm);
+esp_err_t parking_debug_inject_distance(size_t slot_index, float distance_cm, uint8_t times);
 #endif

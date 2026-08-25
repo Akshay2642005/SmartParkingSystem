@@ -1,0 +1,4 @@
+# ESP-IDF v6 moved esp-mqtt out of tree: it ships as a managed component
+# now (same mqtt_client.h API), fetched by the Component Manager.
+dependencies:
+  espressif/mqtt: "*"

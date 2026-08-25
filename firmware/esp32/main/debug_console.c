@@ -17,7 +17,7 @@
 
 /**
  * Debug console (debug builds only): reads commands from UART0.
- *   setdist <slot-id> <cm>   inject a raw distance for slot's next scan
+ *   setdist <slot-id> <cm> [times]  inject a raw distance for the next N scans
  *   selftest                 run the portable parking-domain units
  * Exists solely so wokwi-cli scenarios can drive occupancy/error paths and
  * the self-test headlessly via write-serial; production builds compile this
@@ -66,7 +66,7 @@ static void run_selftest(void) {
 
 /**
  * Parse and apply one command line. Supported:
- *   setdist <slot-id> <cm>   inject a raw distance for slot's next scan
+ *   setdist <slot-id> <cm> [times]  inject a raw distance for the next N scans
  *   selftest                 run the on-target parking domain units
  */
 static void handle_line(const char* line) {
@@ -77,8 +77,10 @@ static void handle_line(const char* line) {
 
     unsigned slot_id = 0;
     float cm = 0.0f;
+    unsigned times = 1;
 
-    if (sscanf(line, "setdist %u %f", &slot_id, &cm) != 2) {
+    int parsed = sscanf(line, "setdist %u %f %u", &slot_id, &cm, &times);
+    if (parsed < 2) {
         ESP_LOGW(TAG, "Unknown or malformed command: %s", line);
         return;
     }
@@ -88,7 +90,12 @@ static void handle_line(const char* line) {
         return;
     }
 
-    esp_err_t err = parking_debug_inject_distance((size_t)(slot_id - 1), cm);
+    if (parsed == 2) {
+        times = 1;
+    }
+
+    esp_err_t err =
+        parking_debug_inject_distance((size_t)(slot_id - 1), cm, (uint8_t)times);
     if (err != ESP_OK) {
         ESP_LOGW(TAG, "Inject failed for slot %u: %s", slot_id, esp_err_to_name(err));
     }

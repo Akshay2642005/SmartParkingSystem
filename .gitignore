@@ -35,6 +35,7 @@ yarn-error.log*
 **/build/
 **/dist/
 **/compile_commands.json
+**/managed_components/
 
 *.o
 *.a

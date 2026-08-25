@@ -7,6 +7,9 @@
 #include "freertos/task.h"
 
 #include "debug_console.h"
+#if CONFIG_PARKING_MQTT_ENABLE
+#include "mqtt_publisher.h"
+#endif
 #include "parking.h"
 #include "parking_config.h"
 #include "parking_settings.h"
@@ -73,6 +76,12 @@ void app_main(void) {
     printf("====================================\n");
 
     initialize_slots();
+
+    // Telemetry registers its transition observer before the parking task
+    // exists, so no committed transition can be missed (communication.md).
+#if CONFIG_PARKING_MQTT_ENABLE
+    ESP_ERROR_CHECK(parking_mqtt_publisher_start());
+#endif
 
     ESP_LOGI(TAG, "Initialized %d parking slots", PARKING_SLOT_COUNT);
 

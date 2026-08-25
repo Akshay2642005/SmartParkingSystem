@@ -5,14 +5,12 @@
 #   - Injected values flow through validate -> EMA filter -> debounce like real
 #     measurements. From a real reading near 100 cm, reaching the occupied side
 #     takes ~8 filter scans plus 2 debounce confirmations -> 9 consecutive 25s.
-#   - Every scan must receive an injection from here through recovery: as soon
-#     as a scan falls back to the healthy sensor (~100 cm), it legitimately
-#     resumes pulling the filter toward FREE.
+#   - setdist's [times] argument keeps an injection alive across consecutive
+#     scans, so a single write feeds the whole confirmation chain; no real
+#     reading can slip in between and reset the counter (drift-proof).
 #   - 33 cm is chosen for the hysteresis hold because the filter equilibrium
 #     (alpha=0.3) settles mid-band (30..35): every scan stays ambiguous, so the
 #     confirmation counter keeps resetting and no transition can fire.
-#   - One injection queues at a time; writes are spaced > 1 s apart so each is
-#     consumed by a distinct scan.
 #   - A single NaN errors exactly one scan (the healthy sensor self-heals the
 #     next); consecutive NaNs keep ERROR alive across multiple scans.
 # All waits are bounded by the CLI --timeout; there are no per-step timeouts.
@@ -24,36 +22,14 @@ steps:
   # Baseline: slot 1 sits at 2 cm in diagram.json -> occupied after debounce.
   - wait-serial: "Slot 1 became OCCUPIED"
   # --- occupancy via injection (slot 2, real reading ~100 cm) ---
-  - write-serial: "setdist 2 25\n"
-  - delay: 1100ms
-  - write-serial: "setdist 2 25\n"
-  - delay: 1100ms
-  - write-serial: "setdist 2 25\n"
-  - delay: 1100ms
-  - write-serial: "setdist 2 25\n"
-  - delay: 1100ms
-  - write-serial: "setdist 2 25\n"
-  - delay: 1100ms
-  - write-serial: "setdist 2 25\n"
-  - delay: 1100ms
-  - write-serial: "setdist 2 25\n"
-  - delay: 1100ms
-  - write-serial: "setdist 2 25\n"
-  - delay: 1100ms
-  - write-serial: "setdist 2 25\n"
+  - write-serial: "setdist 2 25 9\n"
   - wait-serial: "Slot 2 became OCCUPIED"
   # --- hysteresis hold: filter settles mid-band, no transitions possible ---
-  - write-serial: "setdist 2 33\n"
-  - delay: 1100ms
-  - write-serial: "setdist 2 33\n"
-  - delay: 1100ms
-  - write-serial: "setdist 2 33\n"
-  - delay: 1100ms
+  - write-serial: "setdist 2 33 3\n"
+  - delay: 3300ms
   # --- persistent ERROR: consecutive NaN injections, slot 1 unaffected ---
-  - write-serial: "setdist 2 nan\n"
-  - delay: 1100ms
-  - write-serial: "setdist 2 nan\n"
-  - delay: 1100ms
+  - write-serial: "setdist 2 nan 2\n"
+  - delay: 2200ms
   # --- recovery: first valid reading ends ERROR immediately (not debounced);
   #     pre-error was OCCUPIED, so FREE is a real change -> event + WARN.
   #     Firmware prints the state-change event ("became FREE") before the
@@ -61,51 +37,23 @@ steps:
   #     below match that order (wait-serial never rewinds the stream).
   #     No delay before the waits: both lines are one-shot transition events
   #     (unlike the periodic "Parking Lot | ..." status line, which reprints
-  #     every second and can be missed safely). The firmware's next tick
-  #     lands inside a fixed delay window here, and a plain delay step isn't
-  #     actively listening on serial, so it would silently swallow both
-  #     lines before either wait-serial starts scanning - exactly like the
-  #     OCCUPIED transition above, go straight from write to wait so the
-  #     CLI is listening the instant the write completes.
+  #     every second and can be missed safely). Go straight from write to
+  #     wait so the CLI is listening the instant the write completes.
   - write-serial: "setdist 2 100\n"
   - wait-serial: "Slot 2 became FREE"
   - wait-serial: "Slot 2 recovered from ERROR -> FREE"
 
   # --- slot 3 occupancy via injection ---
   # Same dynamics as slot 2 above: 9 consecutive 25s from a ~100 cm seed.
-  - write-serial: "setdist 3 25\n"
-  - delay: 1100ms
-  - write-serial: "setdist 3 25\n"
-  - delay: 1100ms
-  - write-serial: "setdist 3 25\n"
-  - delay: 1100ms
-  - write-serial: "setdist 3 25\n"
-  - delay: 1100ms
-  - write-serial: "setdist 3 25\n"
-  - delay: 1100ms
-  - write-serial: "setdist 3 25\n"
-  - delay: 1100ms
-  - write-serial: "setdist 3 25\n"
-  - delay: 1100ms
-  - write-serial: "setdist 3 25\n"
-  - delay: 1100ms
-  - write-serial: "setdist 3 25\n"
+  - write-serial: "setdist 3 25 9\n"
   - wait-serial: "Slot 3 became OCCUPIED"
 
   # --- free slot 1 by overriding its near-floor sensor (2 cm) ---
   # From a settled ~2 cm stable the first 100 lands mid-band (0.3*100 +
   # 0.7*2 ~= 32), so three consecutive injections are needed to cross 35
-  # and confirm twice. Keep injecting afterwards or the real 2 cm readings
-  # legitimately pull the filter straight back occupied-side.
-  - write-serial: "setdist 1 100\n"
-  - delay: 1100ms
-  - write-serial: "setdist 1 100\n"
-  - delay: 1100ms
-  - write-serial: "setdist 1 100\n"
+  # and confirm twice.
+  - write-serial: "setdist 1 100 3\n"
   - wait-serial: "Slot 1 became FREE"
   # Hold through the remaining scans until the scenario ends.
-  - write-serial: "setdist 1 100\n"
-  - delay: 1100ms
-  - write-serial: "setdist 1 100\n"
-  - delay: 1100ms
-  - write-serial: "setdist 1 100\n"
+  - write-serial: "setdist 1 100 30\n"
+  - delay: 5000ms

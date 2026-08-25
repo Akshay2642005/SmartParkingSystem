@@ -235,12 +235,33 @@ deliberately deferred until a real need appears.
 
 ### Networking
 
-- Not yet implemented. Wi-Fi and device-to-backend communication are pending
-  (`../decisions/ADR-0005-device-communication.md`).
+Implemented (Phase 22); MQTT publishing is behind `CONFIG_PARKING_MQTT_ENABLE`
+(default n; release/debug-console builds compile it out). Wi-Fi STA support
+is always linked, with SSID/password from `PARKING_WIFI_*` Kconfig.
+
+- `net/wifi_sta.c` — blocking `wifi_sta_connect()`: init, default STA netif,
+  register handlers for `WIFI_EVENT` (`STA_START` -> explicit
+  `esp_wifi_connect()`; IDF does not join implicitly) and
+  `IP_EVENT_STA_GOT_IP`, configure SSID/password from Kconfig, start, wait on
+  a binary semaphore with timeout. Retry callers re-run the whole sequence;
+  the handler path is idempotent (`esp_wifi_disconnect/stop` before
+  reconfigure).
+- `mqtt/mqtt_publisher.c` — dedicated task; owns a depth-8 transition queue.
+  esp-mqtt client from the `espressif/mqtt` managed component. On
+  `MQTT_EVENT_CONNECTED`: retained `online` status + full snapshot; LWT is
+  registered up front as retained `offline`. Transitions update the shadow
+  and republish the snapshot immediately (coalesced by the queue);
+  periodic refresh every 30 s ± 3 s keeps state fresh even without events.
+  QoS 1, no send-level retries (snapshot republish covers loss).
+- Verified end-to-end in Wokwi via a local `wokwigw` bridge to a public
+  broker: all scenario transitions observed as seq-incrementing snapshots,
+  teardown produced the retained `offline` LWT.
 
 ### Telemetry
 
-- Not yet implemented.
+- Device side implemented (Phase 22): section snapshots + node status on
+  `parking/{site}/{section}/...` per `communication.md`.
+- Backend consumption not yet implemented (M4).
 
 ### Watchdog / Recovery
 

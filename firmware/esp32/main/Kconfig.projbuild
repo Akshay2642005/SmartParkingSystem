@@ -10,3 +10,42 @@ menu "Parking debug"
         flows through the same validate -> filter -> debounce pipeline as a
         real measurement. Production builds leave this disabled (default n).
 endmenu
+
+menu "Parking MQTT"
+  config PARKING_MQTT_ENABLE
+    bool "Publish parking state over MQTT"
+    default y
+
+  config PARKING_MQTT_URI
+    string "Broker URI"
+    default "mqtt://localhost:1883"
+
+  config PARKING_MQTT_USER
+    string "Broker Username"
+    default ""
+
+  config PARKING_MQTT_PASSWORD
+    string "Broker Password"
+    default ""
+
+  config PARKING_MQTT_SITE
+    string "Site ID"
+    default "main"
+
+  config PARKING_MQTT_SECTION
+    string "Section ID"
+    default "A"
+
+  config PARKING_WIFI_SSID
+    string "WiFi SSID (station)"
+    default "Wokwi-GUEST"
+    help
+      Network the node joins before opening the MQTT connection.
+      Credentials live only in the local (untracked) sdkconfig.
+
+  config PARKING_WIFI_PASSWORD
+    string "WiFi password"
+    default ""
+    help
+      Empty password configures an open network.
+endmenu
