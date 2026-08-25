@@ -2,7 +2,7 @@ project:
   name: Smart Parking System
   status: active
 
-current_phase: M3
+current_phase: M4
 
 completed:
   - ESP-IDF project initialized
@@ -75,8 +75,12 @@ completed:
     stale-seq guard plus offline-driven session reset, slot count learned
     per deployment; 14 unit cases + live broker drill PASS in
     verifications/device-backend.md)
+  - Backend reference template staged (rust-starter at server/my-api,
+    git-excluded local-only; phased import plan P1-P7 recorded, ADR-0006
+    context refreshed to match implemented stack)
 
-in_progress: []
+in_progress:
+  - M4 imports — P1 errors/envelope from reference template
 
 planned:
   - Device identity (ADR-0008)

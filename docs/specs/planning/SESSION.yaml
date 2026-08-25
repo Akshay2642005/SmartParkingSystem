@@ -1,7 +1,7 @@
 session:
-  current_goal: M3 — Device Platform (identity ADR, per-node credentials,
-    backend decision records ADR-0006).
-  current_phase: M3
+  current_goal: M4 — Backend (template imports P1-P7, persistence decision
+    via ADR-0006).
+  current_phase: M4
   completed:
     - M0 — Specification baseline
     - M1 — ESP32 Foundation (firmware boots, clean build, Wokwi)
@@ -87,8 +87,29 @@ session:
       warn-rejected, serde syntax-vs-schema classification. Gates - 14/14
       cargo tests, clippy/fmt clean, firmware build + 34/34 host cases.
       Live drill PASS - verifications/device-backend.md.
+    - Contract alignment pass (2026-08-25, post Phase 23) - spec brought to
+      implemented truth before further work. Slots-per-section declared a
+      deployment property (diagram, example payload, completeness rule),
+      v1 reconnect policy corrected from planned exponential backoff to the
+      shipped fixed-interval retries with backoff explicitly deferred,
+      and a new communication.md § Backend Ingest Rules section pinning
+      consumer obligations (identity from topic, reject taxonomy, session
+      reset, learned slot count, server_ts stamping). ADR-0005 validation
+      status annotated (store half PASS; WebSocket half pending M5).
+    - Backend reference template staged (Phase 24 setup) - rust-starter
+      cloned to server/my-api as a local-only baseline, excluded via
+      .git/info/exclude; feature inventory and phased import plan (P1
+      errors, P2 config, P3 middleware, P4 telemetry, P5 SeaORM+Postgres,
+      P6 OpenAPI, P7 hardening) recorded in impl PHASE-24. ADR-0006 updated
+      to decided-by-implementation truth (axum/tokio/rumqttc) with
+      persistence left Candidate-Pending; tech-stack rows current;
+      PLAN M4 deliverables enumerate the import steps; audit record in
+      quality/audits/backend-reference-adoption.md.
 
-  in_progress: []
+  in_progress:
+    - M4 imports from server/my-api reference - P1 errors/envelope
+      (thiserror on Reject/ValidationError, anyhow at edges, shared JSON
+      error shape), then P2 layered configuration per impl PHASE-24 plan
 
   decisions:
     - Decision (2026-08-23) — device-backend protocol, ADR-0005 accepted
@@ -102,11 +123,14 @@ session:
       Evidence at docs/specs/architecture/communication.md
 
   next:
-    - M3 — Device Platform close-out (broker bring-up done via local
+    - M4 — Device Platform close-out (broker bring-up done via local
       mosquitto + public EMQX; firmware MQTT publisher, payload builder,
       backend ingest and reconnect policy all landed in Phases 21-23;
       remaining work is per-node credentials once a second node exists,
       watchdog/recovery review)
+    - M4 imports P2-P7 from server/my-api reference (configuration,
+      middleware hardening, telemetry, persistence pending ADR-0006
+      acceptance + Postgres, OpenAPI, rate-limit/metrics)
     - Device identity scheme (ADR-0008)
     - Backend framework and persistence (ADR-0006)
   blockers:

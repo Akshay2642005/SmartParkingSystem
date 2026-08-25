@@ -52,13 +52,16 @@ where the repository has not established them.
 | Technology | Purpose | Status | Version | Source of truth |
 | ---------- | ------- | ------ | ------- | --------------- |
 | Rust | Backend language | Current | edition 2024 | `server/parking-server/Cargo.toml` |
-| Web framework | HTTP/API | Pending Decision | — | `ADR-0006` |
+| tokio | Async runtime | Current | 1.x | `server/parking-server/Cargo.toml` |
+| axum | HTTP framework | Current | 0.8 | `server/parking-server/Cargo.toml` |
+| rumqttc | MQTT subscriber | Current | 0.25 | `server/parking-server/Cargo.toml` |
+| Reference template | Production-pattern baseline (config/middleware/telemetry/persistence) | Local-only reference | MIT | `server/my-api` (git-excluded; import plan in impl PHASE-24) |
 
 ## Database
 
 | Technology | Purpose | Status | Version | Source of truth |
 | ---------- | ------- | ------ | ------- | --------------- |
-| Persistence tech | Data storage | Pending Decision | — | `ADR-0006`, `architecture/database.md` |
+| SeaORM + PostgreSQL | Data storage | Candidate (Pending Decision) | SeaORM 1.x | `ADR-0006`, reference template `server/my-api` |
 
 ## Frontend
 

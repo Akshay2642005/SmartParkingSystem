@@ -83,6 +83,8 @@ outweighed ecosystem maturity.
 - Implementation shall be verified by an integration test
   (`../quality/verifications/device-backend.md`): a published snapshot must
   appear in the backend's state store and on a connected dashboard WebSocket.
+  Status (2026-08-25): **store half PASS** (retained cold start, stale-seq
+  guard, reboot session reset); the dashboard WebSocket half lands with M5.
 
 ## Related Documents
 

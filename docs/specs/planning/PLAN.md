@@ -63,10 +63,15 @@ M7 — Production Hardening
 
 - **Objective**: Implement backend ingestion, state, and persistence.
 - **Prerequisites**: M3; backend framework + database selection (`ADR-0006`).
-- **Deliverables**: Device ingestion; parking-slot service; persistence.
+- **Deliverables**: Device ingestion (done, Phase 23); parking-slot service;
+  persistence. Framework conventions are imported stepwise from the local
+  reference template `server/my-api` (git-excluded): errors/envelope,
+  layered configuration, HTTP middleware hardening, structured telemetry,
+  SeaORM+Postgres persistence behind a store trait, then OpenAPI.
 - **Acceptance criteria**: Backend accepts device updates and maintains latest
-  state (`FR-030`, `FR-031`).
-- **Risks**: Framework/persistence choices.
+  state (`FR-030`, `FR-031`), persisted across restarts.
+- **Risks**: Persistence choice still Pending (`ADR-0006`); piecemeal template
+  adoption must not fork conventions between steps.
 
 ## M5 — Dashboard
 

@@ -12,18 +12,20 @@ backend subscribes to the same broker. The dashboard path is covered by
 ## Topology
 
 ```
-[Node A: slots A-1..A-4]──┐
+[Node A: slots A-1..A-n]───┐
 [Node B]──────────────────┼── MQTT ──> [Mosquitto broker (site LAN)] <──subscribe── [Rust backend]
 [Node C]──────────────────┘   retain+LWT                                          │ WebSocket
                                                                             [Next.js dashboard]
 ```
 
-One board serves one section (4 sensors ⇒ 4 slots), so a node maps 1:1 to a
-section (`A`, `B`, …). The broker acts as the coordination point for v1; a
-dedicated gateway service (authoritative state table, WAN-outage buffering) is
-a deliberate non-goal until offline resilience becomes a requirement. Topics
-and payloads are designed so such a gateway can be inserted without firmware
-changes.
+One board serves one section, so a node maps 1:1 to a section (`A`, `B`, …).
+Slots per section are a **deployment property** (the current dev node runs 3
+sensors ⇒ slots `A-1..A-3`; target boards carry 4). Consumers learn the count
+from the first accepted snapshot — see Backend Ingest Rules. The broker acts
+as the coordination point for v1; a dedicated gateway service (authoritative
+state table, WAN-outage buffering) is a deliberate non-goal until offline
+resilience becomes a requirement. Topics and payloads are designed so such a
+gateway can be inserted without firmware changes.
 
 ## Transport
 
@@ -53,8 +55,10 @@ parking/{site}/{section}/status    retained online|offline (LWT target)
    `parking/{site}/{section}/status` → `"offline"` (retained).
 3. On connect success the node publishes `status` → `"online"` (retained),
    then immediately republishes its full state snapshot.
-4. On any disconnect: reconnect with exponential backoff, 1 s doubling to a
-   60 s cap, with ±20 % jitter; after reconnection always perform step 3.
+4. On any disconnect: reconnect and repeat step 3. v1 uses simple fixed
+   retries (5 s task-level Wi-Fi join retry; esp-mqtt's built-in reconnect
+   for the broker session). Exponential backoff with jitter is deferred to
+   hardening — change this section together with the firmware when it lands.
 
 ## State Updates
 
@@ -68,10 +72,13 @@ Published on every slot-state change and additionally refreshed periodically:
   "section": "A",
   "slots": [
     { "id": "A-1", "state": "occupied", "changed_ms": 128450 },
-    { "id": "A-2", "state": "free",     "changed_ms": 90000 }
+    { "id": "A-2", "state": "free",     "changed_ms": 90000 },
+    { "id": "A-3", "state": "error",    "changed_ms": 61000 }
   ]
 }
 ```
+
+(Example shows the dev node's 3 slots; a 4-slot board would list `A-4` too.)
 
 Field rules:
 
@@ -88,8 +95,8 @@ Field rules:
 - States use lowercase protocol tokens (`free|occupied|error`) — the same three
   values as the firmware's `parking_state_t`, translated from the uppercase
   serial vocabulary by an exhaustive mapping pinned by unit/payload tests.
-- Snapshots are complete (all four slots every time), never deltas — consumers
-  can apply them blindly.
+- Snapshots are complete (every slot of the section every time), never
+  deltas — consumers can apply them blindly.
 - Publish cadence: on change (debounced by the firmware's existing debounce
   stage) plus a periodic refresh every **30 s ±10 % jitter** proving liveness
   and healing any lost update.
@@ -112,6 +119,26 @@ message exists in v1. Broker-side keepalive interval: 30 s.
   alone does not reset anything. Slot count per section is learned from the
   first accepted snapshot and enforced thereafter (deployment property, not
   a protocol constant).
+
+## Backend Ingest Rules
+
+Consumer-side obligations (implemented in `server/parking-server`, Phase 23;
+any future gateway MUST match):
+
+- **Identity from topic only** — `(site, section)` come from the topic; a
+  payload whose `section` differs from the topic segment is a hard reject.
+- **Reject taxonomy** — malformed JSON (syntax) and schema violations
+  (unknown state token, missing/wrong-typed required fields including
+  `slots[].id`/`changed_ms`, unknown `v`) are logged loudly and dropped;
+  the subscriber task must survive any input.
+- **Ordering** — `seq < last_seq` ⇒ stale reject; `seq == last_seq` ⇒ QoS 1
+  redelivery, reapply is harmless; `seq > last_seq` ⇒ accept.
+- **Session reset** — retained `status offline` clears the section's stored
+  state so the next snapshot (post-reboot, `seq` restarted at 1) applies.
+- **Slot count** — learned from the first accepted snapshot per section,
+  enforced afterwards (`1..=64` sanity bound).
+- **Timestamps** — accepted snapshots are stamped with `server_ts_ms`
+  (wall clock at ingest); node `ts_ms` stays monotonic uptime.
 
 ## Idempotency
 

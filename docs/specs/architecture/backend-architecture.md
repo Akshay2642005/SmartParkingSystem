@@ -31,6 +31,9 @@ Internal services   → state management, persistence
 
 - Accept device state updates (`FR-030`).
 - Validate and attribute updates to slots (`ADR-0008`).
+- Implemented as an MQTT subscriber (Phase 23) — validation rules and
+  reject taxonomy are contractual: `communication.md` § Backend Ingest
+  Rules.
 
 ### Parking-Slot Service
 
