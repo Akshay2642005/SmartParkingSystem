@@ -1,0 +1,16 @@
+[package]
+name = "telemetry"
+edition = "2024"
+version.workspace = true
+license.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true
+
+[dependencies]
+log = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+tracing-error = { workspace = true }
+tracing-log = { workspace = true }
+configuration = { workspace = true }

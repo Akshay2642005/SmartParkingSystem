@@ -8,7 +8,6 @@ use configuration::load_config;
 use std::net::SocketAddr;
 
 use tracing::info;
-use tracing_subscriber::EnvFilter;
 
 use crate::state::new_shared_store;
 
@@ -16,24 +15,15 @@ use crate::state::new_shared_store;
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let config_dir = std::env::var("CONFIG_DIR").unwrap_or_else(|_| ".".into());
 
-    tracing_subscriber::fmt()
-        .with_env_filter(
-            EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info")),
-        )
-        .init();
-
     let config = std::sync::Arc::new(
         load_config(std::path::Path::new(&config_dir)).context("failed to load config")?,
     );
 
-    info!(
-        broker = %config.mqtt.broker_uri,
-        http = %format!("{}:{}", config.server.host, config.server.port),
-        "starting parking server"
-    );
+    let _ = telemetry::init_tracing(config.clone()).context("failed to initialize telemetry")?;
+
+    info!(config.environment = %config.primary.env, config.name = %config.primary.name, "config loaded");
 
     let store = new_shared_store();
-
     let mqtt_store = store.clone();
     let mqtt_config = config.clone();
 
@@ -46,18 +36,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
                 "MQTT subscriber terminated"
             );
         }
-
         tracing::error!("MQTT subscriber task exited");
     });
 
+    info!(
+        broker = %config.mqtt.broker_uri,
+        server = %format!("http://{}:{}", config.server.host, config.server.port),
+        "starting parking server"
+    );
+
     let app = http::router(store);
-
     let address = format!("{}:{}", config.server.host, config.server.port).parse::<SocketAddr>()?;
-
     let listener = tokio::net::TcpListener::bind(address).await?;
-
-    info!("HTTP server listening on {address}");
-
+    info!("HTTP server listening on: http://{address}");
     axum::serve(listener, app).await?;
 
     Ok(())

@@ -14,12 +14,12 @@ url = "2.5.4"
 anyhow = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }
-tracing-subscriber = { workspace = true }
 configuration = { workspace = true }
+telemetry = { workspace = true }
 
 [workspace]
 resolver = "3"
-members = ["crates/configuration"]
+members = ["crates/configuration", "crates/telemetry"]
 
 [workspace.package]
 version = "0.1.0"
@@ -52,8 +52,11 @@ tracing-subscriber = { version = "0.3", features = [
   "env-filter",
   "fmt",
   "json",
+  "chrono",
 ] }
 tracing-error = "0.2"
+log = "0.4"
+tracing-log = "0.2"
 
 
 # Async Runtime and Utilites
@@ -93,3 +96,4 @@ syn = { version = "3", features = ["full"] }
 
 #Member Crates
 configuration = { path = "crates/configuration" }
+telemetry = { path = "crates/telemetry" }

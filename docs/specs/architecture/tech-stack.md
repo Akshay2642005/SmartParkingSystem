@@ -81,7 +81,9 @@ where the repository has not established them.
 
 | Technology | Purpose | Status | Version | Source of truth |
 | ---------- | ------- | ------ | ------- | --------------- |
-| Logging | Diagnosis | Pending Decision | — | `NFR-005` |
+| tracing | Structured logging facade | Current | 0.1 | `server/parking-server/Cargo.toml` |
+| tracing-subscriber | EnvFilter, formatters (compact/pretty/json), ChronoUtc timestamps | Current | 0.3 | `crates/telemetry/` |
+| tracing-error | Span-context error layer | Current | 0.2 | `crates/telemetry/` |
 
 ## Testing
 

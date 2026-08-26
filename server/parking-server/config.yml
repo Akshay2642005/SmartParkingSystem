@@ -17,17 +17,14 @@ server:
 mqtt:
   broker_uri: "mqtt://localhost:1883"
 
-# telemetry:
-#   service_name: my-api
-#   environment: development
-#   filter: info,my_api=trace
-#   format: compact
-#   ansi: true
-#   include_file: false
-#   include_line_number: false
-#   otlp:
-#     enabled: true
-#     endpoint: "http://localhost:4317"
+telemetry:
+  service_name: parking-server
+  environment: development
+  filter: info
+  format: compact
+  ansi: true
+  include_file: false
+  include_line_number: false
 
 # auth:
 #   secret: "22dd7b011f5dc129b3d06fe5be5258e3fc6a75ad590e3c73e00269b3d606369a"

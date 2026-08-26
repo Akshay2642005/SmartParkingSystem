@@ -56,6 +56,18 @@ Internal services   → state management, persistence
 - Mechanism: WebSocket, snapshot-then-deltas (`ADR-0009`); the backend also
   subscribes to the device broker per `ADR-0005`.
 
+### Observability
+
+- Structured logging via `tracing` + `tracing-subscriber` in a dedicated
+  `telemetry` workspace crate.
+- Three output formats: compact (human), pretty (human), JSON (production).
+  Controlled by `TelemetryConfig.format` in `config.yml`.
+- EnvFilter driven by `TelemetryConfig.filter` (e.g. `info,server=debug`).
+- `tracing-error::ErrorLayer` for span-context propagation on errors.
+- ChronoUtc timestamps; configurable ANSI, file, and line-number inclusion.
+- Format selected at startup via `telemetry::init_tracing(Arc<Config>)`;
+  OTLP export deferred to a future phase.
+
 ## Current State
 
 - Rust package `server` (edition 2024).

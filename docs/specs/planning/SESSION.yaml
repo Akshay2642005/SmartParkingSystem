@@ -114,11 +114,20 @@ session:
       actor exists). Each doc carries tailored code + explanation + exact
       Cargo deltas. Per user directive no server code written yet;
       implementation starts phase-by-phase on explicit go-ahead.
+    - P2 configuration crate landed (2026-08-26) — workspace crate with
+      layered YAML/env config, serde-defaulted schema (PrimaryConfig,
+      ServerConfig, MQTTConfig), startup validation, config.yml committed.
+      Old hand-rolled Config::from_env deleted; main.rs/mqtt.rs adapted.
+    - P4 structured telemetry crate landed (2026-08-26) — workspace crate
+      with tracing-subscriber (EnvFilter, compact/pretty/json, ChronoUtc),
+      tracing-error ErrorLayer, LogFormat enum with PartialEq, Telemetry
+      guard struct; 3 error tests + 5 config schema tests. Observability
+      row in tech-stack.md flipped to Current; Observability subsection
+      added to backend-architecture.md.
 
   in_progress:
-    - M4 imports from server/my-api reference - detailed impl docs
-      complete; awaiting user approval to implement P1 errors/envelope
-      (PHASE-25) first, gates green between phases
+    - M4 imports from server/my-api reference - P2 configuration and P4
+      telemetry crates landed; next P3 HTTP hardening + health endpoints
 
   decisions:
     - Decision (2026-08-23) — device-backend protocol, ADR-0005 accepted
@@ -137,9 +146,9 @@ session:
       backend ingest and reconnect policy all landed in Phases 21-23;
       remaining work is per-node credentials once a second node exists,
       watchdog/recovery review)
-    - M4 imports P2-P7 from server/my-api reference (configuration,
-      middleware hardening, telemetry, persistence pending ADR-0006
-      acceptance + Postgres, OpenAPI, rate-limit/metrics)
+    - M4 imports P3-P7 from server/my-api reference (HTTP hardening +
+      health endpoints, persistence pending ADR-0006 acceptance + Postgres,
+      OpenAPI, WebSocket fan-out, rate-limit/metrics)
     - Device identity scheme (ADR-0008)
     - Backend framework and persistence (ADR-0006)
   blockers:

@@ -78,9 +78,14 @@ completed:
   - Backend reference template staged (rust-starter at server/my-api,
     git-excluded local-only; phased import plan P1-P7 recorded, ADR-0006
     context refreshed to match implemented stack)
+  - P2 configuration crate (layered YAML/env config, workspace crate with
+    dotenvy, startup validation, config.yml committed)
+  - P4 structured telemetry crate (tracing-subscriber with EnvFilter,
+    compact/pretty/json formats, ChronoUtc, ErrorLayer, telemetry workspace
+    crate, 3 unit tests + 5 config schema tests)
 
 in_progress:
-  - M4 imports — P1 errors/envelope from reference template
+  - M4 imports — P2 configuration + P4 telemetry landed; next P3 HTTP hardening
 
 planned:
   - Device identity (ADR-0008)
