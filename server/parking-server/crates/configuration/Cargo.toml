@@ -1,0 +1,19 @@
+[package]
+name = "configuration"
+edition = "2024"
+version.workspace = true
+license.workspace = true
+
+
+[dependencies]
+anyhow.workspace = true
+config.workspace = true
+dotenvy.workspace = true
+serde.workspace = true
+
+tokio.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true
+

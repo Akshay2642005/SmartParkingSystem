@@ -1,0 +1,55 @@
+primary:
+  env: development
+  name: parking-server
+
+server:
+  host: 0.0.0.0
+  port: 8080
+  read_timeout_secs: 30
+  write_timeout_secs: 30
+  idle_timeout_secs: 50
+  request_timeout_secs: 300
+  shutdown_timeout_secs: 30
+  min_graceful_shutdown_secs: 5
+  cors_allowed_origins: ["http://localhost:3000"]
+  path_prefix: "/api/v1"
+
+mqtt:
+  broker_uri: "mqtt://localhost:1883"
+
+# telemetry:
+#   service_name: my-api
+#   environment: development
+#   filter: info,my_api=trace
+#   format: compact
+#   ansi: true
+#   include_file: false
+#   include_line_number: false
+#   otlp:
+#     enabled: true
+#     endpoint: "http://localhost:4317"
+
+# auth:
+#   secret: "22dd7b011f5dc129b3d06fe5be5258e3fc6a75ad590e3c73e00269b3d606369a"
+#   base_url: "http://localhost:8080"
+#   # Mounted under server.path_prefix, so this becomes /api/v1/auth.
+#   path_prefix: "/auth"
+#   # If you prefer a fully-qualified auth path, set it here and update
+#   # build_auth_mount_path to skip server.path_prefix composition.
+#   # path_prefix: "/api/v1/auth"
+#   enable_signup: true
+#   password_min_length: 8
+#   argon2:
+#     memory_cost: 19456
+#     time_cost: 2
+#     parallelism: 1
+#
+# store:
+#   url: postgres://postgres:postgres@localhost:5432/my_api
+#   max_connections: 4
+#   min_connections: 1
+#   connect_timeout_secs: 30
+#   acquire_timeout_secs: 30
+#   idle_timeout_secs: 30
+#   max_lifetime_secs: 1800
+#   sqlx_logging: true

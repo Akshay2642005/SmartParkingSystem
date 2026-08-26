@@ -105,11 +105,20 @@ session:
       persistence left Candidate-Pending; tech-stack rows current;
       PLAN M4 deliverables enumerate the import steps; audit record in
       quality/audits/backend-reference-adoption.md.
+    - (2026-08-26) Full migration phase series authored in impl
+      PHASE-25..33 (local-only): P1 errors/envelope, P2 layered config,
+      P3 HTTP hardening + health endpoints, P4 telemetry module,
+      P5 SeaORM persistence (GATED on ADR-0006 acceptance), P6 OpenAPI +
+      read API, P7 WebSocket fan-out per ADR-0009, P8 ops hardening
+      (cargo-make/deny/rate-limit/metrics), P9 auth (GATED until a second
+      actor exists). Each doc carries tailored code + explanation + exact
+      Cargo deltas. Per user directive no server code written yet;
+      implementation starts phase-by-phase on explicit go-ahead.
 
   in_progress:
-    - M4 imports from server/my-api reference - P1 errors/envelope
-      (thiserror on Reject/ValidationError, anyhow at edges, shared JSON
-      error shape), then P2 layered configuration per impl PHASE-24 plan
+    - M4 imports from server/my-api reference - detailed impl docs
+      complete; awaiting user approval to implement P1 errors/envelope
+      (PHASE-25) first, gates green between phases
 
   decisions:
     - Decision (2026-08-23) — device-backend protocol, ADR-0005 accepted

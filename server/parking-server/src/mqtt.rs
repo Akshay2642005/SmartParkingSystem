@@ -1,17 +1,14 @@
+use crate::state::{SharedStateStore, TopicKind, apply_status, apply_update, parse_topic};
+use configuration::Config;
 use rumqttc::{AsyncClient, Event, EventLoop, MqttOptions, Packet, QoS};
 use tokio::time::{Duration, sleep};
 use tracing::{error, info, warn};
-
-use crate::{
-    config::Config,
-    state::{SharedStateStore, TopicKind, apply_status, apply_update, parse_topic},
-};
 
 const MQTT_CLIENT_ID: &str = "parking-server";
 const MQTT_TOPIC: &str = "parking/#";
 
 pub async fn run(
-    config: Config,
+    config: std::sync::Arc<Config>,
     store: SharedStateStore,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let (client, mut event_loop) = create_client(&config)?;
@@ -96,7 +93,7 @@ fn handle_publish(topic: &str, payload: &[u8], store: &SharedStateStore) {
 fn create_client(
     config: &Config,
 ) -> Result<(AsyncClient, EventLoop), Box<dyn std::error::Error + Send + Sync>> {
-    let uri = url::Url::parse(&config.broker_uri)?;
+    let uri = url::Url::parse(&config.mqtt.broker_uri)?;
 
     let host = uri.host_str().ok_or("broker URI has no host")?;
 
@@ -106,8 +103,11 @@ fn create_client(
 
     options.set_keep_alive(Duration::from_secs(30));
 
-    if let Some(username) = &config.username {
-        options.set_credentials(username, config.password.as_deref().unwrap_or_default());
+    if let Some(username) = &config.mqtt.username {
+        options.set_credentials(
+            username,
+            config.mqtt.password.as_deref().unwrap_or_default(),
+        );
     }
 
     Ok(AsyncClient::new(options, 32))
