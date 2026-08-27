@@ -8,9 +8,9 @@ project(parking_host_tests LANGUAGES C)
 # the ultrasonic driver. No IDF toolchain, no hardware: plain C11 on the
 # host, driven by CTest:
 #
-#   make test                          # from firmware/esp32 — full gate
-#   make test-host                     # units only (Redis-style output, fast)
-#   ctest --test-dir tests/build       # same binaries via CTest (CI)
+#   ./scripts/test.sh                       # from repo root — full gate
+#   ./scripts/test.sh --no-build            # run only (skip cmake build)
+#   ctest --test-dir tests/build            # same binaries via CTest (CI)
 #
 # The build tree lives in ./build (tests/build), NOT tracked.
 #
