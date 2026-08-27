@@ -60,6 +60,9 @@ static uint32_t s_seq;
 static char s_state_topic[64];
 static char s_status_topic[64];
 
+/* Stable, unique broker identity (see mqtt_task). */
+static char s_client_id[64];
+
 static long now_ms(void) {
     return (long)(esp_timer_get_time() / 1000);
 }
@@ -184,10 +187,22 @@ static void mqtt_task(void* arg) {
         CONFIG_PARKING_MQTT_SITE,
         CONFIG_PARKING_MQTT_SECTION);
 
+    // Give each node a stable, unique broker identity. Simulated nodes that
+    // share a MAC (Wokwi assigns identical MACs) otherwise collide on the
+    // default client id, so EMQX's session-takeover rule drops every node but
+    // one whenever another connects. Site+section is this node's identity
+    // (see ADR-0008 device identity), so it is unique per section.
+    snprintf(s_client_id,
+        sizeof(s_client_id),
+        "smart-parking-%s-%s",
+        CONFIG_PARKING_MQTT_SITE,
+        CONFIG_PARKING_MQTT_SECTION);
+
     const esp_mqtt_client_config_t config = {
         .broker.address.uri = CONFIG_PARKING_MQTT_URI,
         .credentials.username = CONFIG_PARKING_MQTT_USER,
         .credentials.authentication.password = CONFIG_PARKING_MQTT_PASSWORD,
+        .credentials.client_id = s_client_id,
         .session =
             {
                 .keepalive = 30,
