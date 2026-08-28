@@ -17,6 +17,8 @@ impl std::error::Error for TraceInitError {}
 
 #[cfg(test)]
 mod tests {
+    use configuration::RateLimitConfig;
+
     use super::*;
 
     #[test]
@@ -46,11 +48,16 @@ mod tests {
                 max_body_size_bytes: 1024,
                 cors_allowed_origins: vec![],
                 path_prefix: "/".into(),
+                rate_limit: RateLimitConfig::default(),
             },
-            mqtt: configuration::MQTTConfig {
+            mqtt: configuration::MqttConfig {
                 broker_uri: "mqtt://localhost:1883".into(),
                 username: None,
                 password: None,
+                client_id: "test1".to_string(),
+                keep_alive_secs: 6000000,
+                reconnect_delay_secs: 500,
+                capacity: 15,
             },
             telemetry: configuration::TelemetryConfig {
                 service_name: "test".into(),
@@ -61,6 +68,7 @@ mod tests {
                 include_file: false,
                 include_line_number: false,
             },
+            store: None,
         });
         let _ = crate::init_tracing(cfg.clone());
         let result = crate::init_tracing(cfg);

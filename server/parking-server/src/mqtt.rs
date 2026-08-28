@@ -105,8 +105,13 @@ fn create_client(
 
     if let Some(username) = &config.mqtt.username {
         options.set_credentials(
-            username,
-            config.mqtt.password.as_deref().unwrap_or_default(),
+            username.expose(),
+            config
+                .mqtt
+                .password
+                .as_ref()
+                .map(configuration::Secret::expose)
+                .unwrap_or_default(),
         );
     }
 

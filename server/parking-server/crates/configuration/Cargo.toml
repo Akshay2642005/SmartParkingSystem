@@ -10,11 +10,11 @@ anyhow.workspace = true
 config.workspace = true
 dotenvy.workspace = true
 serde.workspace = true
-
+url.workspace = true
 tokio.workspace = true
 tracing.workspace = true
 
 [dev-dependencies]
 serde_json.workspace = true
 serde_yaml = "0.9"
-
+tempfile = "3"

@@ -7,8 +7,6 @@ use anyhow::Context;
 use configuration::load_config;
 use std::net::SocketAddr;
 
-use tracing::info;
-
 use crate::state::new_shared_store;
 
 #[tokio::main]
@@ -21,7 +19,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
     let _ = telemetry::init_tracing(config.clone()).context("failed to initialize telemetry")?;
 
-    info!(config.environment = %config.primary.env, config.name = %config.primary.name, "config loaded");
+    tracing::info!(config.environment = %config.primary.env, config.name = %config.primary.name, "config loaded");
 
     let store = new_shared_store();
     let mqtt_store = store.clone();
@@ -39,7 +37,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         tracing::error!("MQTT subscriber task exited");
     });
 
-    info!(
+    tracing::info!(
         broker = %config.mqtt.broker_uri,
         server = %format!("http://{}:{}", config.server.host, config.server.port),
         "starting parking server"
@@ -48,7 +46,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let app = http::router(store);
     let address = format!("{}:{}", config.server.host, config.server.port).parse::<SocketAddr>()?;
     let listener = tokio::net::TcpListener::bind(address).await?;
-    info!("HTTP server listening on: http://{address}");
+    tracing::info!("HTTP server listening on: http://{address}");
     axum::serve(listener, app).await?;
 
     Ok(())
