@@ -1,73 +1,133 @@
 [package]
-name = "server"
+name = "parking-server"
 version = "0.1.0"
 edition = "2024"
+license = "MIT"
+description = "Smart Parking System backend — MQTT ingest, parking state, dashboard API"
+
+[lib]
+name = "parking_server"
+path = "src/lib.rs"
+
+[[bin]]
+name = "parking-server"
+path = "src/main.rs"
 
 [dependencies]
 
-axum = { workspace = true }
-tokio = { workspace = true }
-rumqttc = "0.25.1"
-serde = { workspace = true }
-serde_json = { workspace = true }
+# Device ingest (MQTT per ADR-0005)
+rumqttc = { workspace = true }
 url = { workspace = true }
+
+# Http
+axum = { workspace = true }
+tower = { workspace = true }
+tower-http = { workspace = true }
+
+# Error Handling
 anyhow = { workspace = true }
 thiserror = { workspace = true }
+
+# Data Serialization and Deserialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Observability and Logging
 tracing = { workspace = true }
+
+# Async
+tokio = { workspace = true }
+async-trait = { workspace = true }
+
+# Persistence (entities and query building; pooling lives in the seaorm crate)
+sea-orm = { workspace = true }
+
+# Registry
+inventory = { workspace = true }
+
+# Date/Time
+chrono = { workspace = true }
+
+# OpenAPI
+utoipa = { workspace = true }
+utoipa-scalar = { workspace = true }
+
+# Rate limiting
+tower_governor = { workspace = true }
+governor = { workspace = true }
+
+# Workspace Crates
 configuration = { workspace = true }
+seaorm = { workspace = true }
 telemetry = { workspace = true }
+
+# internal crates can be added here as dependencies for the root package,
+
+[dev-dependencies]
+sea-orm = { workspace = true, features = ["mock"] }
+futures-util = { workspace = true }
+http-body-util = { workspace = true }
+reqwest = { workspace = true }
+tokio-tungstenite = { workspace = true }
 
 [workspace]
 resolver = "3"
-members = ["crates/configuration", "crates/telemetry", "crates/seaorm"]
+members = ["crates/configuration", "crates/seaorm", "crates/telemetry"]
+default-members = [
+  ".",
+  "crates/configuration",
+  "crates/seaorm",
+  "crates/telemetry",
+]
 
+# Workspace package settings
 [workspace.package]
 version = "0.1.0"
 edition = "2024"
 license = "MIT"
 
 
+# Workspace dependencies can be defined here and will be shared across all members of the workspace.
 [workspace.dependencies]
 
 # Error Handling
 anyhow = "1"
 thiserror = "2"
 
+# CLI Tooling
+clap = { version = "4", features = ["derive", "env"] }
+xshell = "0.2"
 
-#configuration
+# Configuration
 config = { version = "0.15.22", default-features = false, features = [
   "toml",
   "yaml",
 ] }
 dotenvy = "0.15"
-
+notify = "8.2.0"
 
 # Data Serialization and Deserialization
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 
-#Observability and Logging
+# Observability and Logging
+log = "0.4"
 tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = [
+tracing-subscriber = { version = "0.3.20", features = [
+  "chrono",
   "env-filter",
   "fmt",
   "json",
-  "chrono",
 ] }
 tracing-error = "0.2"
-log = "0.4"
 tracing-log = "0.2"
 
-
-# Async Runtime and Utilites
+# Async Runtime and Utilities
 tokio = { version = "1.0", features = ["full"] }
 async-trait = "0.1"
-rand = "0.10.2"
 sha2 = "0.11"
-base64 = "0.23"
-uuid = { version = "1", features = ["v7", "serde"] }
+uuid = { version = "1", features = ["v4", "serde"] }
 chrono = { version = "0.4", features = ["serde"] }
-argon2 = "0.5"
 
 # Database and ORM
 sea-orm = { version = "2", features = [
@@ -85,15 +145,70 @@ sea-orm-migration = { version = "2", features = [
 
 # HTTP Libraries
 axum = { version = "0.8", features = ["macros", "tracing", "multipart", "ws"] }
-url = "2.5.4"
+tower = { version = "0.5", features = ["util"] }
+tower-http = { version = "0.7", features = [
+  "cors",
+  "compression-gzip",
+  "timeout",
+  "trace",
+  "request-id",
+  "sensitive-headers",
+  "catch-panic",
+  "set-header",
+  "limit",
+] }
+# tower_governor 0.8 / axum-prometheus 0.10 are the axum-0.8 generation; the
+# template's 0.6 / 0.7 lines pulled a second (0.7) axum into the graph.
+tower_governor = { version = "0.8", features = ["axum"] }
+governor = "0.10"
+
+# HTTP client, test-only
+reqwest = { version = "0.13.4", features = ["json"], default-features = false }
+
+# utoipa 5 / utoipa-scalar 0.3 are the axum-0.8 generation; the template's
+# utoipa 4 line dragged in a second (0.7) axum via `axum_extras`.
+utoipa = { version = "5", features = ["axum_extras", "chrono", "uuid"] }
+utoipa-scalar = { version = "0.3", features = ["axum"] }
+
+# Device ingest (MQTT per ADR-0005) and broker URI parsing
+rumqttc = "0.25"
+url = "2.5"
+
+# Test-only HTTP body / WebSocket clients
+futures-util = "0.3"
+http-body-util = "0.1"
+tokio-tungstenite = "0.30"
+
 
 #Proc Macro
 inventory = "0.3"
-paste = "1"
 proc-macro2 = "1"
 quote = "1"
 syn = { version = "3", features = ["full"] }
 
-#Member Crates
+
+# Member Crates
 configuration = { path = "crates/configuration" }
+seaorm = { path = "crates/seaorm" }
 telemetry = { path = "crates/telemetry" }
+macros = { path = "crates/macros" }
+
+
+# Profile settings for development and release builds. These settings can be overridden in individual member packages if needed.
+[profile.dev]
+opt-level = 0
+debug = true
+incremental = true
+
+[profile.dev.package."*"]
+opt-level = 1
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+strip = "symbols"
+# Deliberate deviation from the template's `panic = "abort"`: CatchPanicLayer
+# can only turn a handler panic into a 500 envelope while panics unwind, and a
+# single bad request must not take the ingest loop down with it.
+panic = "unwind"

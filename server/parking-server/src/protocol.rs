@@ -1,25 +1,57 @@
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
 pub const PROTOCOL_VERSION: u8 = 1;
 
-/// Sanity cap on slots per section. The real count is a deployment property
-/// (the dev board has 3 sensors, target boards 4), so consumers learn it from
-/// the first accepted snapshot instead of hardcoding it - see state.rs.
 pub const MAX_SLOTS: usize = 64;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub const TOPIC_ROOT: &str = "parking";
+
+pub const TOPIC_FILTER: &str = "parking/#";
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "lowercase")]
 pub enum SlotState {
-    #[serde(rename = "free")]
     Free,
-
-    #[serde(rename = "occupied")]
     Occupied,
-
-    #[serde(rename = "error")]
     Error,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+impl SlotState {
+    #[must_use]
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Free => "free",
+            Self::Occupied => "occupied",
+            Self::Error => "error",
+        }
+    }
+}
+
+impl std::fmt::Display for SlotState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl std::str::FromStr for SlotState {
+    type Err = UnknownSlotState;
+
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        match value {
+            "free" => Ok(Self::Free),
+            "occupied" => Ok(Self::Occupied),
+            "error" => Ok(Self::Error),
+            other => Err(UnknownSlotState(other.to_owned())),
+        }
+    }
+}
+
+#[derive(Debug, thiserror::Error)]
+#[error("unknown slot state token: {0}")]
+pub struct UnknownSlotState(pub String);
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, ToSchema)]
 pub struct Slot {
     pub id: String,
     pub state: SlotState,
@@ -29,51 +61,34 @@ pub struct Slot {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct SectionSnapshot {
     pub v: u8,
-    #[allow(dead_code)]
     pub ts_ms: u64,
     pub seq: u64,
     pub section: String,
     pub slots: Vec<Slot>,
 }
 
-#[derive(Debug, Clone, Serialize)]
-pub struct SectionState {
-    pub site: String,
-    pub section: String,
-    pub seq: u64,
-    pub slot_count: usize,
-    pub slots: Vec<Slot>,
-    pub server_ts_ms: u64,
-}
-
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum ValidationError {
+    #[error("malformed JSON: {0}")]
     MalformedJson(serde_json::Error),
+
+    #[error("schema violation: {0}")]
     Schema(serde_json::Error),
+
+    #[error("unsupported version: {0}")]
     UnsupportedVersion(u8),
+
+    #[error("invalid slot count: {0}")]
     InvalidSlotCount(usize),
+
+    #[error("section name is empty")]
     EmptySection,
-}
 
-impl std::fmt::Display for ValidationError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ValidationError::MalformedJson(e) => write!(f, "Malformed JSON: {}", e),
-            ValidationError::Schema(e) => write!(f, "Schema violation: {}", e),
-            ValidationError::UnsupportedVersion(v) => write!(f, "Unsupported version: {}", v),
-            ValidationError::InvalidSlotCount(count) => write!(f, "Invalid slot count: {}", count),
-            ValidationError::EmptySection => write!(f, "Section name is empty"),
-        }
-    }
+    #[error("duplicate slot id: {0}")]
+    DuplicateSlotId(String),
 }
-
-impl std::error::Error for ValidationError {}
 
 impl SectionSnapshot {
-    /// Parse and validate a protocol v1 snapshot. JSON syntax errors are
-    /// malformed input; type mismatches (unknown state tokens, wrong field
-    /// types, missing required fields such as slots[].id) are schema
-    /// violations - communication.md requires rejecting both loudly.
     pub fn parse(payload: &[u8]) -> Result<Self, ValidationError> {
         let snapshot: Self =
             serde_json::from_slice(payload).map_err(|error| match error.classify() {
@@ -93,6 +108,67 @@ impl SectionSnapshot {
             return Err(ValidationError::EmptySection);
         }
 
+        let mut seen = std::collections::HashSet::with_capacity(snapshot.slots.len());
+        for slot in &snapshot.slots {
+            if !seen.insert(slot.id.as_str()) {
+                return Err(ValidationError::DuplicateSlotId(slot.id.clone()));
+            }
+        }
+
         Ok(snapshot)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TopicKind {
+    State,
+    Status,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn payload(slots: serde_json::Value) -> Vec<u8> {
+        serde_json::json!({ "v": 1, "ts_ms": 10, "seq": 1, "section": "A", "slots": slots })
+            .to_string()
+            .into_bytes()
+    }
+
+    #[test]
+    fn slot_state_round_trips_through_its_protocol_token() {
+        for state in [SlotState::Free, SlotState::Occupied, SlotState::Error] {
+            assert_eq!(state.as_str().parse::<SlotState>().unwrap(), state);
+            assert_eq!(
+                serde_json::to_string(&state).unwrap(),
+                format!("\"{}\"", state.as_str())
+            );
+        }
+
+        assert!("unknown".parse::<SlotState>().is_err());
+    }
+
+    #[test]
+    fn duplicate_slot_ids_are_a_schema_violation() {
+        let result = SectionSnapshot::parse(&payload(serde_json::json!([
+            { "id": "A-1", "state": "free", "changed_ms": 0 },
+            { "id": "A-1", "state": "occupied", "changed_ms": 1 }
+        ])));
+
+        assert!(matches!(result, Err(ValidationError::DuplicateSlotId(id)) if id == "A-1"));
+    }
+
+    #[test]
+    fn slot_count_bound_is_enforced() {
+        let slots = (0..=MAX_SLOTS)
+            .map(|index| {
+                serde_json::json!({ "id": format!("A-{index}"), "state": "free", "changed_ms": 0 })
+            })
+            .collect::<Vec<_>>();
+
+        assert!(matches!(
+            SectionSnapshot::parse(&payload(serde_json::json!(slots))),
+            Err(ValidationError::InvalidSlotCount(_))
+        ));
     }
 }

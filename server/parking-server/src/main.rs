@@ -1,3 +1,4 @@
+mod domain;
 mod http;
 mod mqtt;
 mod protocol;
