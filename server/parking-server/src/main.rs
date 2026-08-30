@@ -1,8 +1,11 @@
 mod domain;
+mod events;
 mod http;
 mod mqtt;
 mod protocol;
+mod response;
 mod state;
+mod store;
 
 use anyhow::Context;
 use configuration::load_config;
