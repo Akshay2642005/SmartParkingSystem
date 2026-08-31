@@ -1,15 +1,17 @@
-use crate::state::{SharedStateStore, TopicKind, apply_status, apply_update, parse_topic};
 use configuration::Config;
 use rumqttc::{AsyncClient, Event, EventLoop, MqttOptions, Packet, QoS};
 use tokio::time::{Duration, sleep};
-use tracing::{error, info, warn};
+use tracing::{info, warn};
 
+use crate::{
+    domain::parking::parse_topic, events::ServerEvent, protocol::TopicKind, state::AppState,
+};
 const MQTT_CLIENT_ID: &str = "parking-server";
 const MQTT_TOPIC: &str = "parking/#";
 
 pub async fn run(
     config: std::sync::Arc<Config>,
-    store: SharedStateStore,
+    state: &AppState,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let (client, mut event_loop) = create_client(&config)?;
 
@@ -30,7 +32,7 @@ pub async fn run(
                     "MQTT publish received"
                 );
 
-                handle_publish(&publish.topic, &publish.payload, &store);
+                handle_publish(state, &publish.topic, &publish.payload).await;
             }
 
             Ok(event) => {
@@ -46,21 +48,18 @@ pub async fn run(
     }
 }
 
-fn handle_publish(topic: &str, payload: &[u8], store: &SharedStateStore) {
-    let mut guard = match store.lock() {
-        Ok(guard) => guard,
-        Err(poisoned) => {
-            error!("state store mutex poisoned");
-            poisoned.into_inner()
-        }
-    };
-
+async fn handle_publish(state: &AppState, topic: &str, payload: &[u8]) {
     match parse_topic(topic) {
-        Ok((_, _, TopicKind::Status)) => match apply_status(&mut guard, topic, payload) {
+        Ok((_, _, TopicKind::Status)) => match state.store.apply_status(topic, payload).await {
             // Liveness handling (dashboard node_status events) comes later;
             // today offline matters because it resets the stale-seq baseline.
-            Ok(status) => {
-                info!(topic, ?status, "node status update");
+            Ok(outcome) => {
+                info!(topic, ?outcome, "node status update");
+                state.publish(ServerEvent::node_status(
+                    outcome.site,
+                    outcome.section,
+                    outcome.status,
+                ));
             }
 
             Err(error) => {
@@ -68,7 +67,7 @@ fn handle_publish(topic: &str, payload: &[u8], store: &SharedStateStore) {
             }
         },
 
-        _ => match apply_update(&mut guard, topic, payload) {
+        _ => match state.store.apply_update(topic, payload).await {
             Ok(state) => {
                 info!(
                     site = %state.site,
