@@ -10,6 +10,7 @@ mod store;
 
 use anyhow::Context;
 use configuration::load_config;
+use parking_server::app;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
@@ -27,5 +28,67 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     // let listener = tokio::net::TcpListener::bind(address).await?;
     // tracing::info!("HTTP server listening on: http://{address}");
 
+    let server = app::ServerBuilder::new(config).build().await?;
+    server.run(graceful_shutdown()).await?;
     Ok(())
+}
+async fn graceful_shutdown() {
+    #[cfg(unix)]
+    {
+        use tokio::signal::unix::{SignalKind, signal};
+
+        let mut terminate = match signal(SignalKind::terminate()) {
+            Ok(signal) => signal,
+            Err(error) => {
+                tracing::error!(error = %error, "failed to listen for SIGTERM");
+
+                if let Err(error) = tokio::signal::ctrl_c().await {
+                    tracing::error!(
+                        error = %error,
+                        "failed to listen for shutdown signal"
+                    );
+                }
+
+                return;
+            }
+        };
+
+        let mut interrupt = match signal(SignalKind::interrupt()) {
+            Ok(signal) => signal,
+            Err(error) => {
+                tracing::error!(error = %error, "failed to listen for SIGINT");
+
+                if let Err(error) = tokio::signal::ctrl_c().await {
+                    tracing::error!(
+                        error = %error,
+                        "failed to listen for shutdown signal"
+                    );
+                }
+
+                return;
+            }
+        };
+
+        tokio::select! {
+            _ = tokio::signal::ctrl_c() => {},
+            _ = terminate.recv() => {},
+            _ = interrupt.recv() => {},
+        }
+
+        tracing::info!("shutdown signal received");
+    }
+
+    #[cfg(not(unix))]
+    {
+        if let Err(error) = tokio::signal::ctrl_c().await {
+            tracing::error!(
+                error = %error,
+                "failed to listen for shutdown signal"
+            );
+
+            return;
+        }
+
+        tracing::info!("shutdown signal received");
+    }
 }
