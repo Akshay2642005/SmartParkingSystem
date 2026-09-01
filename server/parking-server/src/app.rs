@@ -1,15 +1,17 @@
-use crate::{state::AppState, store};
+use crate::{mqtt, state::AppState, store};
 use anyhow::{Context, Result};
 use axum::Router;
 use configuration::Config;
 use seaorm::SeaOrmStore;
 use std::{future::Future, net::SocketAddr, sync::Arc};
-use tokio::net::TcpListener;
+use tokio::{net::TcpListener, task::JoinHandle};
 use tracing::{info, warn};
 
 pub struct Server {
     listener: TcpListener,
     app: Router,
+    db: Option<SeaOrmStore>,
+    ingest: JoinHandle<()>,
 }
 
 impl Server {
@@ -23,19 +25,32 @@ impl Server {
     where
         S: Future<Output = ()> + Send + 'static,
     {
-        let Server { listener, app } = self;
+        let Server {
+            listener,
+            app,
+            db,
+            ingest,
+        } = self;
         let addr = listener
             .local_addr()
             .context("could not read local address")?;
         info!(%addr, "http server started");
 
-        axum::serve(
+        let result = axum::serve(
             listener,
             app.into_make_service_with_connect_info::<SocketAddr>(),
         )
         .with_graceful_shutdown(shutdown)
         .await
-        .context("server error")
+        .context("server error");
+
+        ingest.abort();
+        if let Some(db) = db
+            && let Err(error) = db.close().await
+        {
+            tracing::warn!(%error, "failed to close database connections");
+        }
+        result
     }
 }
 
@@ -80,6 +95,8 @@ impl ServerBuilder {
             parking_store,
             crate::events::channel(),
         );
+
+        let ingest = mqtt::spawn(state.clone());
         let app = build_router(state, &self.cfg);
 
         let addr: SocketAddr =
@@ -89,7 +106,12 @@ impl ServerBuilder {
             .with_context(|| format!("failed to bind TCP listener to {addr}"))?;
         info!(%addr, "tcp listener bound — ready to serve");
 
-        Ok(Server { listener, app })
+        Ok(Server {
+            listener,
+            app,
+            db,
+            ingest,
+        })
     }
 }
 

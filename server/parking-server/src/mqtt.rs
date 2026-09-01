@@ -9,11 +9,8 @@ use crate::{
 const MQTT_CLIENT_ID: &str = "parking-server";
 const MQTT_TOPIC: &str = "parking/#";
 
-pub async fn run(
-    config: std::sync::Arc<Config>,
-    state: &AppState,
-) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    let (client, mut event_loop) = create_client(&config)?;
+pub async fn run(state: AppState) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let (client, mut event_loop) = create_client(&state.config)?;
 
     loop {
         match event_loop.poll().await {
@@ -32,7 +29,7 @@ pub async fn run(
                     "MQTT publish received"
                 );
 
-                handle_publish(state, &publish.topic, &publish.payload).await;
+                handle_publish(&state, &publish.topic, &publish.payload).await;
             }
 
             Ok(event) => {
@@ -115,4 +112,14 @@ fn create_client(
     }
 
     Ok(AsyncClient::new(options, 32))
+}
+
+pub fn spawn(state: AppState) -> tokio::task::JoinHandle<()> {
+    tokio::spawn(async move {
+        info!("starting MQTT subscriber");
+
+        if let Err(error) = run(state).await {
+            tracing::error!(%error,"MQTT subscriber terminated");
+        }
+    })
 }
