@@ -8,7 +8,7 @@
 //! | `GET /readyz` | readiness: device feed + store | no |
 //! | `GET /status` | component detail | no |
 
-use crate::{middleware, mqtt, state::AppState, store};
+use crate::{handlers::ws::ws_entry, middleware, mqtt, state::AppState, store};
 use anyhow::{Context, Result};
 use axum::{Router, routing::get};
 use configuration::Config;
@@ -127,12 +127,16 @@ impl ServerBuilder {
 
 /// Compose the router. Public for integration tests, which drive it directly.
 pub fn build_router(state: AppState, cfg: &Config) -> Router {
-    let router = ops_router().with_state(state);
+    let router = Router::new()
+        .nest("/sys", system_router())
+        .nest("/api/v1", ops_router())
+        .with_state(state);
+
     middleware::apply(router, cfg)
 }
 
 /// Unprefixed operational endpoints: liveness, readiness, component status.
-fn ops_router() -> Router<AppState> {
+fn system_router() -> Router<AppState> {
     use crate::handlers::system;
 
     Router::new()
@@ -141,4 +145,8 @@ fn ops_router() -> Router<AppState> {
         .route("/livez", get(system::livez))
         .route("/readyz", get(system::readyz))
         .route("/status", get(system::status))
+}
+
+fn ops_router() -> Router<AppState> {
+    Router::new().route("/ws", get(ws_entry))
 }
