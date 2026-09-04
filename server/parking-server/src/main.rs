@@ -1,13 +1,3 @@
-#![allow(unused)]
-
-mod domain;
-mod events;
-mod mqtt;
-mod protocol;
-mod response;
-mod state;
-mod store;
-
 use anyhow::Context;
 use configuration::load_config;
 use parking_server::app;
@@ -24,14 +14,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
     tracing::info!(config.environment = %config.primary.env, config.name = %config.primary.name, "config loaded");
 
-    // let address = format!("{}:{}", config.server.host, config.server.port).parse::<SocketAddr>()?;
-    // let listener = tokio::net::TcpListener::bind(address).await?;
-    // tracing::info!("HTTP server listening on: http://{address}");
-
     let server = app::ServerBuilder::new(config).build().await?;
     server.run(graceful_shutdown()).await?;
     Ok(())
 }
+
 async fn graceful_shutdown() {
     #[cfg(unix)]
     {

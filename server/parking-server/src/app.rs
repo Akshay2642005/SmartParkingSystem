@@ -1,6 +1,16 @@
-use crate::{mqtt, state::AppState, store};
+//! Server lifecycle and router composition.
+//!
+//! Route table:
+//!
+//! | Route | Purpose | Rate limited |
+//! | ----- | ------- | ------------ |
+//! | `GET /health`, `/healthz`, `/livez` | liveness | no |
+//! | `GET /readyz` | readiness: device feed + store | no |
+//! | `GET /status` | component detail | no |
+
+use crate::{middleware, mqtt, state::AppState, store};
 use anyhow::{Context, Result};
-use axum::Router;
+use axum::{Router, routing::get};
 use configuration::Config;
 use seaorm::SeaOrmStore;
 use std::{future::Future, net::SocketAddr, sync::Arc};
@@ -115,6 +125,20 @@ impl ServerBuilder {
     }
 }
 
-pub fn build_router(_state: AppState, _cfg: &Config) -> Router {
+/// Compose the router. Public for integration tests, which drive it directly.
+pub fn build_router(state: AppState, cfg: &Config) -> Router {
+    let router = ops_router().with_state(state);
+    middleware::apply(router, cfg)
+}
+
+/// Unprefixed operational endpoints: liveness, readiness, component status.
+fn ops_router() -> Router<AppState> {
+    use crate::handlers::system;
+
     Router::new()
+        .route("/health", get(system::health))
+        .route("/healthz", get(system::healthz))
+        .route("/livez", get(system::livez))
+        .route("/readyz", get(system::readyz))
+        .route("/status", get(system::status))
 }

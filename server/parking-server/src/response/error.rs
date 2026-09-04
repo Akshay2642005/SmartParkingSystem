@@ -4,9 +4,8 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use serde::Serialize;
-use utoipa::ToSchema;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, ToSchema)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ErrorCode {
     Internal,
@@ -20,7 +19,7 @@ pub enum ErrorCode {
     InvalidFrame,
 }
 
-#[derive(Debug, Serialize, ToSchema)]
+#[derive(Debug, Serialize)]
 pub struct ErrorBody {
     pub code: ErrorCode,
     pub message: String,
@@ -28,7 +27,7 @@ pub struct ErrorBody {
     pub request_id: Option<String>,
 }
 
-#[derive(Debug, Serialize, ToSchema)]
+#[derive(Debug, Serialize)]
 pub struct ErrorResponse {
     pub error: ErrorBody,
 }

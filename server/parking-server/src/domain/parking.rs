@@ -1,12 +1,11 @@
 use serde::Serialize;
 use std::time::{SystemTime, UNIX_EPOCH};
-use utoipa::ToSchema;
 
 use crate::protocol::{SectionSnapshot, Slot, TopicKind, ValidationError};
 
 pub type SectionKey = (String, String);
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, ToSchema)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct SectionState {
     pub site: String,
     pub section: String,
@@ -37,7 +36,7 @@ pub struct SectionGuard {
     pub slot_count: usize,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, ToSchema)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum NodeStatus {
     Online,

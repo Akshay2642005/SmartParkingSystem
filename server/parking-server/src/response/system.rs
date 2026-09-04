@@ -1,22 +1,21 @@
 use crate::domain::health;
 use chrono::{DateTime, Utc};
 use serde::Serialize;
-use utoipa::ToSchema;
 
-#[derive(Debug, Clone, Serialize, ToSchema)]
+#[derive(Debug, Clone, Serialize)]
 pub struct ProbeResponse {
     pub status: String,
     pub timestamp: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, ToSchema)]
+#[derive(Debug, Clone, Serialize)]
 pub struct ComponentStatus {
     pub status: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub detail: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, ToSchema)]
+#[derive(Debug, Clone, Serialize)]
 pub struct StatusChecks {
     /// Device feed (MQTT subscription).
     pub ingest: ComponentStatus,
@@ -24,7 +23,7 @@ pub struct StatusChecks {
     pub store: ComponentStatus,
 }
 
-#[derive(Debug, Clone, Serialize, ToSchema)]
+#[derive(Debug, Clone, Serialize)]
 pub struct StatusResponse {
     pub status: String,
     pub service: String,

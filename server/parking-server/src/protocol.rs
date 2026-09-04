@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
 
 pub const PROTOCOL_VERSION: u8 = 1;
 
@@ -9,7 +8,7 @@ pub const TOPIC_ROOT: &str = "parking";
 
 pub const TOPIC_FILTER: &str = "parking/#";
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum SlotState {
     Free,
@@ -51,7 +50,7 @@ impl std::str::FromStr for SlotState {
 #[error("unknown slot state token: {0}")]
 pub struct UnknownSlotState(pub String);
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Slot {
     pub id: String,
     pub state: SlotState,

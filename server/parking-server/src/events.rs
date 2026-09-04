@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
 use tokio::sync::broadcast;
-use utoipa::ToSchema;
 
 use crate::{
     domain::parking::{NodeStatus, SectionState, now_ms},
@@ -17,7 +16,7 @@ pub fn channel() -> EventSender {
     broadcast::Sender::new(CHANNEL_CAPACITY)
 }
 
-#[derive(Debug, Clone, Serialize, ToSchema)]
+#[derive(Debug, Clone, Serialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum ServerEvent {
     Snapshot {
