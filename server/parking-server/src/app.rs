@@ -15,7 +15,6 @@ use configuration::Config;
 use seaorm::SeaOrmStore;
 use std::{future::Future, net::SocketAddr, sync::Arc};
 use tokio::{net::TcpListener, task::JoinHandle};
-use tracing::{info, warn};
 
 pub struct Server {
     listener: TcpListener,
@@ -44,7 +43,7 @@ impl Server {
         let addr = listener
             .local_addr()
             .context("could not read local address")?;
-        info!(%addr, "http server started");
+        tracing::info!(%addr, "http server started");
 
         let result = axum::serve(
             listener,
@@ -83,7 +82,7 @@ impl ServerBuilder {
                 Some(db)
             }
             None => {
-                warn!(
+                tracing::warn!(
                     "no store configured - running ephemeral: parking state and ingest guards \
                      are lost on restart"
                 );
@@ -95,7 +94,7 @@ impl ServerBuilder {
             None => Arc::new(store::MemoryStore::new()),
             Some(_db) => todo!(),
         };
-        info!(
+        tracing::info!(
             backend = parking_store.backend(),
             "parking state backend ready"
         );
@@ -114,7 +113,7 @@ impl ServerBuilder {
         let listener = TcpListener::bind(addr)
             .await
             .with_context(|| format!("failed to bind TCP listener to {addr}"))?;
-        info!(%addr, "tcp listener bound — ready to serve");
+        tracing::info!(%addr, "tcp listener bound — ready to serve");
 
         Ok(Server {
             listener,

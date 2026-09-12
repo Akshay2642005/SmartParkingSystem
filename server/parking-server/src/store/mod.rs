@@ -1,5 +1,6 @@
 #![allow(dead_code, unused)]
 mod memory;
+mod postgres;
 
 use crate::domain::parking::{NodeStatus, Reject, SectionState};
 use async_trait::async_trait;

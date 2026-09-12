@@ -65,17 +65,17 @@ async fn graceful_shutdown() {
         tracing::info!("shutdown signal received");
     }
 
-    #[cfg(not(unix))]
-    {
-        if let Err(error) = tokio::signal::ctrl_c().await {
-            tracing::error!(
-                error = %error,
-                "failed to listen for shutdown signal"
-            );
-
-            return;
-        }
-
-        tracing::info!("shutdown signal received");
-    }
+    // #[cfg(not(unix))]
+    // {
+    //     if let Err(error) = tokio::signal::ctrl_c().await {
+    //         tracing::error!(
+    //             error = %error,
+    //             "failed to listen for shutdown signal"
+    //         );
+    //
+    //         return;
+    //     }
+    //
+    //     tracing::info!("shutdown signal received");
+    // }
 }
