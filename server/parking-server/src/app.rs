@@ -8,7 +8,12 @@
 //! | `GET /readyz` | readiness: device feed + store | no |
 //! | `GET /status` | component detail | no |
 
-use crate::{handlers::ws::ws_entry, middleware, mqtt, state::AppState, store};
+use crate::{
+    handlers::{sections, ws::ws_entry},
+    middleware, mqtt,
+    state::AppState,
+    store,
+};
 use anyhow::{Context, Result};
 use axum::{Router, routing::get};
 use configuration::Config;
@@ -147,5 +152,12 @@ fn system_router() -> Router<AppState> {
 }
 
 fn ops_router() -> Router<AppState> {
-    Router::new().route("/ws", get(ws_entry))
+    Router::new()
+        .route("/ws", get(ws_entry))
+        .route(
+            "/site/{site}/sections/{section}",
+            get(sections::get_section),
+        )
+        .route("/sections/", get(sections::list_sections))
+        .route("/sites/{site}/sections/", get(sections::list_sections))
 }
