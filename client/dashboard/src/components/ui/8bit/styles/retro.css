@@ -1,0 +1,24 @@
+/*
+ * Vendored from the 8bitcn/ui registry (`components/ui/8bit/styles/retro.css`),
+ * with one deliberate change: upstream pulls "Press Start 2P" from the Google
+ * Fonts CDN at CSS-parse time. This dashboard self-hosts its type (Zed Mono,
+ * see `src/app/fonts.ts`) and must not add a render-blocking third-party
+ * request, so `.retro` maps to the local mono face with pixel-ish tracking.
+ *
+ * Consequence: 8-bit components keep their stepped pixel geometry but render in
+ * the console's own typeface. Re-apply this change if the registry item is
+ * updated with `shadcn add @8bitcn/...`.
+ */
+
+.retro {
+  font-family: var(--font-zed-mono), ui-monospace, monospace;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pixelated {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}

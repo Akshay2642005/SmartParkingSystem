@@ -14,8 +14,10 @@ server:
   cors_allowed_origins: ["http://localhost:3000"]
   path_prefix: "/api/v1"
 
+# Device ingest (ADR-0005). The firmware (sdkconfig) publishes to this broker;
+# both sides must point at the same one or no snapshot ever crosses.
 mqtt:
-  broker_uri: "mqtt://localhost:1883"
+  broker_uri: "mqtt://broker.emqx.io:1883"
 
 telemetry:
   service_name: parking-server

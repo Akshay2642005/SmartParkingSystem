@@ -132,8 +132,8 @@ impl ServerBuilder {
 /// Compose the router. Public for integration tests, which drive it directly.
 pub fn build_router(state: AppState, cfg: &Config) -> Router {
     let router = Router::new()
-        .nest("/sys", system_router())
-        .nest("/api/v1", ops_router())
+        .merge(system_router())
+        .merge(ops_router(&cfg.server.path_prefix))
         .with_state(state);
 
     middleware::apply(router, cfg)
@@ -151,13 +151,23 @@ fn system_router() -> Router<AppState> {
         .route("/status", get(system::status))
 }
 
-fn ops_router() -> Router<AppState> {
+/// Versioned API endpoints under `server.path_prefix` (default `/api/v1`):
+/// the dashboard WebSocket and the section reads, all rate limited.
+fn ops_router(path_prefix: &str) -> Router<AppState> {
+    let prefix = path_prefix.trim_matches('/');
+
     Router::new()
-        .route("/ws", get(ws_entry))
+        .route(&format!("/{prefix}/ws"), get(ws_entry))
         .route(
-            "/site/{site}/sections/{section}",
+            &format!("/{prefix}/sections"),
+            get(sections::list_sections),
+        )
+        .route(
+            &format!("/{prefix}/sites/{{site}}/sections"),
+            get(sections::list_sections),
+        )
+        .route(
+            &format!("/{prefix}/sites/{{site}}/sections/{{section}}"),
             get(sections::get_section),
         )
-        .route("/sections/", get(sections::list_sections))
-        .route("/sites/{site}/sections/", get(sections::list_sections))
 }

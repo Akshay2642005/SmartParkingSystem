@@ -4,7 +4,10 @@ use tokio::time::{Duration, sleep};
 use tracing::{info, warn};
 
 use crate::{
-    domain::parking::parse_topic, events::ServerEvent, protocol::TopicKind, state::AppState,
+    domain::parking::{now_ms, parse_topic},
+    events::ServerEvent,
+    protocol::TopicKind,
+    state::AppState,
 };
 const MQTT_CLIENT_ID: &str = "parking-server";
 const MQTT_TOPIC: &str = "parking/#";
@@ -15,11 +18,17 @@ pub async fn run(state: AppState) -> Result<(), Box<dyn std::error::Error + Send
     loop {
         match event_loop.poll().await {
             Ok(Event::Incoming(Packet::ConnAck(_))) => {
+                state.health.set_mqtt_connected(true);
                 info!("MQTT connected");
 
                 client.subscribe(MQTT_TOPIC, QoS::AtLeastOnce).await?;
 
                 info!("subscribed to {MQTT_TOPIC}");
+            }
+
+            Ok(Event::Incoming(Packet::Disconnect)) => {
+                state.health.set_mqtt_connected(false);
+                warn!("broker sent DISCONNECT");
             }
 
             Ok(Event::Incoming(Packet::Publish(publish))) => {
@@ -37,6 +46,7 @@ pub async fn run(state: AppState) -> Result<(), Box<dyn std::error::Error + Send
             }
 
             Err(error) => {
+                state.health.set_mqtt_connected(false);
                 warn!("MQTT connection error: {error}");
 
                 sleep(Duration::from_secs(1)).await;
@@ -65,14 +75,17 @@ async fn handle_publish(state: &AppState, topic: &str, payload: &[u8]) {
         },
 
         _ => match state.store.apply_update(topic, payload).await {
-            Ok(state) => {
+            Ok(section) => {
                 info!(
-                    site = %state.site,
-                    section = %state.section,
-                    seq = state.seq,
-                    slot_count = state.slot_count,
+                    site = %section.site,
+                    section = %section.section,
+                    seq = section.seq,
+                    slot_count = section.slot_count,
                     "accepted parking snapshot"
                 );
+
+                state.health.record_ingest(now_ms());
+                state.publish(ServerEvent::update(section));
             }
 
             Err(error) => {
